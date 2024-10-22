@@ -20,8 +20,9 @@ int main()
     setlocale(LC_ALL, "en_US.UTF-8");
 
     // 构造 JSON 对象
+    std::cout << "构造 JSON 对象" << std::endl;
     {
-        fcjson::json_value fcjson = fcjson::json_object{
+        fcjson::json_value val = fcjson::json_object{
             { "null", nullptr},
             { "bool_false", false },
             { "bool_true", true },
@@ -42,23 +43,41 @@ int main()
         };
 
         // 序列化(不转义UNICODE字符)
-        std::cout << fcjson.dump(4, false) << std::endl;
+        std::cout << val.dump(4, false) << std::endl;
 
         // 序列化(转义UNICODE字符)
-        std::cout << fcjson.dump(4, true) << std::endl;
+        std::cout << val.dump(4, true) << std::endl;
+    }
+
+    // 赋值操作
+    std::cout << std::endl;
+    std::cout << "赋值操作" << std::endl;
+    {
+        fcjson::json_value val;
+        val = fcjson::json_array{ 1,2,3,4,5,6,7,8,9,0 };
+        std::cout << "count: " << val.count() << std::endl;
+        std::cout << "type: " << val.get_type_name() << std::endl;
+        std::cout << val.dump(4, false) << std::endl;
+
+        val = fcjson::json_object{{ "name", "我是地球🌍" }, { "age", 30 }};
+        std::cout << "count: " << val.count() << std::endl;
+        std::cout << "type: " << val.get_type_name() << std::endl;
+        std::cout << val.dump(4, false) << std::endl;
     }
 
     // 解析字符串/转储字符串
+    std::cout << std::endl;
+    std::cout << "解析字符串/转储字符串" << std::endl;
     {
-        fcjson::json_value fcjson;
+        fcjson::json_value val;
 
-        fcjson.parse(R"({"name":"FlameCyclone","age":30})");
-        std::string strJson = fcjson.dump(4, true);
+        val.parse(R"({"name":"FlameCyclone","age":30})");
+        std::string strJson = val.dump(4, true);
         std::cout << strJson << std::endl;
 
         // 访问数组
-        fcjson["array"] = fcjson::json_type::json_type_array;
-        auto& array = fcjson["array"];
+        val["array"] = fcjson::json_type::json_type_array;
+        auto& array = val["array"];
         for (int i = 0; i < 5; i++)
         {
             array[i] = i;
@@ -68,8 +87,8 @@ int main()
         array.remove(4);
 
         // 访问对象
-        fcjson["object"] = fcjson::json_type::json_type_object;
-        auto& object = fcjson["object"];
+        val["object"] = fcjson::json_type::json_type_object;
+        auto& object = val["object"];
         for (int i = 0; i < 5; i++)
         {
             object[std::to_string(i)] = i;
@@ -79,18 +98,20 @@ int main()
         object.remove("1");
 
         //赋值
-        fcjson["hobby"] = "C++";
-        fcjson.remove("object");
-        fcjson["hobby"] = nullptr;
+        val["hobby"] = "C++";
+        val.remove("object");
+        val["hobby"] = nullptr;
 
-        std::cout << fcjson.dump(4, true) << std::endl;
+        std::cout << val.dump(4, true) << std::endl;
     }
 
     // 解析文件/转储文件
+    std::cout << std::endl;
+    std::cout << "解析文件/转储文件" << std::endl;
     {
-        fcjson::json_value fcjson;
-        fcjson.parse_from_file("data.json");
-        fcjson.dump_to_file("dump.json", 4);
+        fcjson::json_value val;
+        val.parse_from_file("data.json");
+        val.dump_to_file("dump.json", 4);
     }
 
     std::ifstream inputFile(TEST_JSON_FILE, std::ios::binary | std::ios::in);
@@ -112,17 +133,18 @@ int main()
     clock_t timeBegin = clock();
     clock_t timeEnd = clock();
 
+    std::cout << std::endl;
+    std::cout << "性能测试" << std::endl;
     while (true)
     {
         {
-            fcjson::json_value fcjson;
-            fcjson.parse_from_file("data.json");
+            fcjson::json_value val;
+            val.parse_from_file("data.json");
 
-            std::cout << "fcjson 性能测试" << std::endl;
             timeBegin = clock();
             for (int i = 0; i < nCount; i++)
             {
-                fcjson.parse(strBuffer);
+                val.parse(strBuffer);
             }
             timeEnd = clock();
             std::cout << "parse cost time: " << timeEnd - timeBegin << std::endl;
@@ -131,7 +153,7 @@ int main()
             std::string strDump;
             for (int i = 0; i < nCount; i++)
             {
-                strDump = fcjson.dump(dump_indent);
+                strDump = val.dump(dump_indent);
             }
             timeEnd = clock();
             std::cout << "dump cost time: " << timeEnd - timeBegin << std::endl;
