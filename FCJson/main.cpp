@@ -1,5 +1,4 @@
 ﻿#include <iostream>
-#include <tchar.h>
 #include <locale>
 #include <string>
 #include <fstream>
@@ -12,25 +11,23 @@
 #else
 #define TEST_JSON_FILE  "city_4.json"
 #endif
+
 int count = 1;
 int dump_indent = 4;
 
 int main()
 {
-    setlocale(LC_ALL, "");
+    setlocale(LC_ALL, "zh_CN.UTF-8");
 
-    size_t nCount = count;
-    clock_t timeBegin = clock();
-    clock_t timeEnd = clock();
-
+    // 构造 JSON 对象
     {
-        // 构造json
         fcjson::json_value fcjson = fcjson::json_object{
             { "null", nullptr},
             { "bool_false", false },
             { "bool_true", true },
             { "int_min", INT64_MIN },
             { "int_max", INT64_MAX },
+            { "uint_max", UINT64_MAX },
             { "float", 3.1415926535 },
             { "object", fcjson::json_object{
                     { "name", "我是地球🌍" },
@@ -44,9 +41,48 @@ int main()
             }
         };
 
-        // 序列化
+        // 序列化(不转义UNICODE字符)
+        std::cout << fcjson.dump(4, false) << std::endl;
+
+        // 序列化(转义UNICODE字符)
+        std::cout << fcjson.dump(4, true) << std::endl;
+    }
+
+    // 解析字符串/转储字符串
+    {
+        fcjson::json_value fcjson;
+
+        fcjson.parse(R"({"name":"FlameCyclone","age":30})");
         std::string strJson = fcjson.dump(4, true);
         std::cout << strJson << std::endl;
+
+        fcjson["array"] = fcjson::json_type::json_type_array;
+        fcjson::json_array array = fcjson["array"].as_array();
+
+        //赋值
+        fcjson["hobby"] = "C++";
+        std::cout << "type: " << fcjson.get_type_name() << std::endl;
+        std::cout << "count:" << fcjson.count() << std::endl;
+        std::cout << fcjson.dump(4, true) << std::endl;
+
+        //
+        fcjson["hobby"] = nullptr;
+        std::cout << "type: " << fcjson.get_type_name() << std::endl;
+        std::cout << "count:" << fcjson.count() << std::endl;
+        std::cout << fcjson.dump(4, true) << std::endl;
+
+        //
+        fcjson.clear();
+        std::cout << "type: " << fcjson.get_type_name() << std::endl;
+        std::cout << "count:" << fcjson.count() << std::endl;
+        std::cout << fcjson.dump(4, true) << std::endl;
+    }
+
+    // 解析文件/转储文件
+    {
+        fcjson::json_value fcjson;
+        fcjson.parse_from_file("data.json");
+        fcjson.dump_to_file("dump.json", 4);
     }
 
     std::ifstream inputFile(TEST_JSON_FILE, std::ios::binary | std::ios::in);
@@ -61,15 +97,20 @@ int main()
 
     std::string strBuffer(nSize, 0);
     inputFile.read((char*)&strBuffer[0], nSize);
-    size_t nByteSize = (size_t)inputFile.gcount();
     inputFile.close();
 
     // 性能测试
+    size_t nCount = count;
+    clock_t timeBegin = clock();
+    clock_t timeEnd = clock();
+
     while (true)
     {
         {
             fcjson::json_value fcjson;
-            std::cout << "fcjson" << std::endl;
+            fcjson.parse_from_file("data.json");
+
+            std::cout << "fcjson 性能测试" << std::endl;
             timeBegin = clock();
             for (int i = 0; i < nCount; i++)
             {

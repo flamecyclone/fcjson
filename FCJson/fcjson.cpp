@@ -203,6 +203,12 @@ namespace fcjson
         }
     }
 
+    json_value& json_value::operator = (nullptr_t)
+    {
+        reset_type(json_type::json_type_null);
+        return *this;
+    }
+
     json_value& json_value::operator = (json_type type)
     {
         reset_type(type);
@@ -512,7 +518,7 @@ namespace fcjson
         return m_data._float;
     }
 
-    json_string json_value::as_string() const
+    json_string& json_value::as_string() const
     {
         if (!json_type::json_type_string == m_type)
         {
@@ -522,7 +528,7 @@ namespace fcjson
         return *m_data._string_ptr;
     }
 
-    json_object json_value::as_object() const
+    json_object& json_value::as_object() const
     {
         if (!json_type::json_type_object == m_type)
         {
@@ -532,7 +538,7 @@ namespace fcjson
         return *m_data._object_ptr;
     }
 
-    json_array json_value::as_array() const
+    json_array& json_value::as_array() const
     {
         if (!json_type::json_type_array == m_type)
         {

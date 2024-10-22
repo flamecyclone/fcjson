@@ -115,7 +115,7 @@ namespace fcjson
         // 构造
         json_value();
         json_value(json_type type);
-        json_value(nullptr_t val);
+        json_value(nullptr_t);
         json_value(json_bool val);
         json_value(int32_t val);
         json_value(uint32_t val);
@@ -133,6 +133,7 @@ namespace fcjson
         json_value(json_array&& val);
 
         // 运算符重载
+        json_value& operator = (nullptr_t);
         json_value& operator = (json_type type);
         json_value& operator = (json_bool val);
         json_value& operator = (int32_t val);
@@ -175,9 +176,9 @@ namespace fcjson
         json_int as_int() const;
         json_uint as_uint() const;
         json_float as_float() const;
-        json_string as_string() const;
-        json_object as_object() const;
-        json_array as_array() const;
+        json_string& as_string() const;
+        json_object& as_object() const;
+        json_array& as_array() const;
 
         // 
         // @brief: 获取本身或子项计数
