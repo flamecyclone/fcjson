@@ -396,7 +396,7 @@ namespace fcjson
         return it_insert.first->second;
     }
 
-    json_value& json_value::operator[](const size_t index)
+    json_value& json_value::operator[](size_t index)
     {
         if (json_type::json_type_array != m_type)
         {
@@ -441,6 +441,54 @@ namespace fcjson
         if (json_type::json_type_object == m_type) return _T("Object");
         if (json_type::json_type_array == m_type) return _T("Array");
         return _T("None");
+    }
+
+    bool json_value::remove(const _tstring& name)
+    {
+        if (!is_object())
+        {
+            return false;
+        }
+
+        if (nullptr == m_data._object_ptr)
+        {
+            return false;
+        }
+
+        json_object& object = *m_data._object_ptr;
+        auto it_find = object.find(name);
+        if (object.end() == it_find)
+        {
+            return false;
+        }
+
+        object.erase(it_find);
+
+        return true;
+    }
+
+    bool json_value::remove(const size_t index)
+    {
+        if (!is_array())
+        {
+            return false;
+        }
+
+        if (nullptr == m_data._array_ptr)
+        {
+            return false;
+        }
+
+        json_array& array = *m_data._array_ptr;
+        if (index >= array.size())
+        {
+            return false;
+        }
+
+        array.erase(array.begin() + index);
+
+        return true;
+
     }
 
     bool json_value::is_null() const

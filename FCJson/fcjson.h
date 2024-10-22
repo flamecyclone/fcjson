@@ -151,7 +151,7 @@ namespace fcjson
         json_value& operator = (json_array&& val);
         json_value& operator = (json_value&& r) noexcept;
         json_value& operator [] (const _tstring& name);
-        json_value& operator [] (const size_t index);
+        json_value& operator [] (size_t index);
 
         // 清空
         void clear();
@@ -161,6 +161,8 @@ namespace fcjson
         // 检查与类型判断
         json_type get_type() const;
         _tstring get_type_name() const;
+        bool remove(const _tstring& name);
+        bool remove(const size_t index);
 
         // 类型判断
         bool is_null() const;

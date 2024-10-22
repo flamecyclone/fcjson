@@ -17,7 +17,7 @@ int dump_indent = 4;
 
 int main()
 {
-    setlocale(LC_ALL, "zh_CN.UTF-8");
+    setlocale(LC_ALL, "en_US.UTF-8");
 
     // 构造 JSON 对象
     {
@@ -56,11 +56,41 @@ int main()
         std::string strJson = fcjson.dump(4, true);
         std::cout << strJson << std::endl;
 
+        // 访问数组
         fcjson["array"] = fcjson::json_type::json_type_array;
-        fcjson::json_array array = fcjson["array"].as_array();
+        auto& array = fcjson["array"];
+        for (int i = 0; i < 5; i++)
+        {
+            array[i] = i;
+        }
+
+        // 删除数组元素
+        array.remove(4);
+
+        // 访问对象
+        fcjson["object"] = fcjson::json_type::json_type_object;
+        auto& object = fcjson["object"];
+        for (int i = 0; i < 5; i++)
+        {
+            object[std::to_string(i)] = i;
+        }
+
+        // 删除对象元素
+        object.remove("1");
 
         //赋值
         fcjson["hobby"] = "C++";
+        std::cout << "type: " << fcjson.get_type_name() << std::endl;
+        std::cout << "count:" << fcjson.count() << std::endl;
+        std::cout << fcjson.dump(4, true) << std::endl;
+
+        fcjson["object"].clear();
+        fcjson["array"].clear();
+        std::cout << "type: " << fcjson.get_type_name() << std::endl;
+        std::cout << "count:" << fcjson.count() << std::endl;
+        std::cout << fcjson.dump(4, true) << std::endl;
+
+        fcjson.remove("object");
         std::cout << "type: " << fcjson.get_type_name() << std::endl;
         std::cout << "count:" << fcjson.count() << std::endl;
         std::cout << fcjson.dump(4, true) << std::endl;
@@ -76,6 +106,7 @@ int main()
         std::cout << "type: " << fcjson.get_type_name() << std::endl;
         std::cout << "count:" << fcjson.count() << std::endl;
         std::cout << fcjson.dump(4, true) << std::endl;
+
     }
 
     // 解析文件/转储文件
