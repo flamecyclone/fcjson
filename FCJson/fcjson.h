@@ -159,8 +159,8 @@ namespace fcjson
         ~json_value();
 
         // 检查与类型判断
-        json_type get_type() const;
-        _tstring get_type_name() const;
+        json_type type() const;
+        _tstring type_name() const;
 
         // 类型判断
         bool is_null() const;
@@ -228,7 +228,8 @@ namespace fcjson
 
     private:
 
-        inline void reset_type(json_type type);
+        // 重置类型
+        inline void _reset_type(json_type type);
 
         // 解析
         json_value _parse(const _tchar* pData, const _tchar** pEnd);
@@ -263,5 +264,7 @@ namespace fcjson
         }m_data;                            // 数据
 
         json_type    m_type;                // 类型(表示当前数据所属类型)
+
+        static json_value _none_value;      // 不存在的值
     };
 }

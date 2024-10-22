@@ -51,6 +51,8 @@ namespace fcjson
 
 #endif
 
+    json_value json_value::_none_value(json_type::json_type_null);
+
     static std::string _get_utf8_text_for_code_point(uint32_t cp32);
     static bool _get_utf16_code_point(const _tchar* data_ptr, uint32_t* code_point_ptr, const _tchar** end_ptr);
     static bool _get_unicode_string(_tstring& append_buf, const _tchar* data_ptr, const _tchar** end_ptr);
@@ -194,8 +196,13 @@ namespace fcjson
         r.m_type = json_type::json_type_null;
     }
 
-    inline void json_value::reset_type(json_type type)
+    inline void json_value::_reset_type(json_type type)
     {
+        if (this == &_none_value)
+        {
+            return;
+        }
+
         if (type != m_type)
         {
             clear();
@@ -205,61 +212,106 @@ namespace fcjson
 
     json_value& json_value::operator = (nullptr_t)
     {
-        reset_type(json_type::json_type_null);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_null);
         return *this;
     }
 
     json_value& json_value::operator = (json_type type)
     {
-        reset_type(type);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(type);
         return *this;
     }
 
     json_value& json_value::operator = (json_bool val)
     {
-        reset_type(json_type::json_type_bool);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_bool);
         m_data._bool = val;
         return *this;
     }
 
     json_value& json_value::operator = (int32_t val)
     {
-        reset_type(json_type::json_type_int);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_int);
         m_data._int = val;
         return *this;
     }
 
     json_value& json_value::operator = (uint32_t val)
     {
-        reset_type(json_type::json_type_int);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_int);
         m_data._uint = val;
         return *this;
     }
 
     json_value& json_value::operator = (int64_t val)
     {
-        reset_type(json_type::json_type_int);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_int);
         m_data._int = val;
         return *this;
     }
 
     json_value& json_value::operator = (uint64_t val)
     {
-        reset_type(json_type::json_type_uint);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_uint);
         m_data._uint = val;
         return *this;
     }
 
     json_value& json_value::operator = (json_float val)
     {
-        reset_type(json_type::json_type_float);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_float);
         m_data._float = val;
         return *this;
     }
 
     json_value& json_value::operator = (const _tchar* val)
     {
-        reset_type(json_type::json_type_string);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_string);
         if (nullptr == m_data._string_ptr)
         {
             m_data._string_ptr = new (std::nothrow) json_string(val);
@@ -269,7 +321,12 @@ namespace fcjson
 
     json_value& json_value::operator = (const json_string& val)
     {
-        reset_type(json_type::json_type_string);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_string);
         if (nullptr == m_data._string_ptr)
         {
             m_data._string_ptr = new (std::nothrow) json_string(val);
@@ -279,7 +336,12 @@ namespace fcjson
 
     json_value& json_value::operator = (const json_object& val)
     {
-        reset_type(json_type::json_type_object);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_object);
         if (nullptr == m_data._object_ptr)
         {
             m_data._object_ptr = new (std::nothrow) json_object(val);
@@ -289,7 +351,12 @@ namespace fcjson
 
     json_value& json_value::operator = (const json_array& val)
     {
-        reset_type(json_type::json_type_array);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_array);
         if (nullptr == m_data._array_ptr)
         {
             m_data._array_ptr = new (std::nothrow) json_array(val);
@@ -299,6 +366,11 @@ namespace fcjson
 
     json_value& json_value::operator = (const json_value& r)
     {
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
         if (&r != this)
         {
             clear();
@@ -327,7 +399,12 @@ namespace fcjson
 
     json_value& json_value::operator = (json_string&& val)
     {
-        reset_type(json_type::json_type_string);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_string);
         if (nullptr == m_data._string_ptr)
         {
             m_data._string_ptr = new (std::nothrow) json_string(std::move(val));
@@ -337,7 +414,12 @@ namespace fcjson
 
     json_value& json_value::operator = (json_object&& val)
     {
-        reset_type(json_type::json_type_object);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_object);
         if (nullptr == m_data._object_ptr)
         {
             m_data._object_ptr = new (std::nothrow) json_object(std::move(val));
@@ -347,7 +429,12 @@ namespace fcjson
 
     json_value& json_value::operator = (json_array&& val)
     {
-        reset_type(json_type::json_type_array);
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
+        _reset_type(json_type::json_type_array);
         if (nullptr == m_data._array_ptr)
         {
             m_data._array_ptr = new (std::nothrow) json_array(std::move(val));
@@ -357,6 +444,11 @@ namespace fcjson
 
     json_value& json_value::operator = (json_value&& r) noexcept
     {
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
         if (&r != this)
         {
             clear();
@@ -372,9 +464,15 @@ namespace fcjson
 
     json_value& json_value::operator[](const _tstring& name)
     {
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
         if (!is_object())
         {
-            throw json_exception(_T("operator[] JsonType::eObject == m_Type"));
+            return _none_value;
+            //throw json_exception(_T("operator[] JsonType::eObject == m_Type"));
         }
 
         if (nullptr == m_data._object_ptr)
@@ -382,7 +480,8 @@ namespace fcjson
             m_data._object_ptr = new (std::nothrow) json_object;
             if (nullptr == m_data._object_ptr)
             {
-                throw json_exception(_T("operator[] nullptr == m_Data.Object"));
+                return _none_value;
+                //throw json_exception(_T("operator[] nullptr == m_Data.Object"));
             }
         }
 
@@ -398,9 +497,15 @@ namespace fcjson
 
     json_value& json_value::operator[](size_t index)
     {
+        if (this == &_none_value)
+        {
+            return _none_value;
+        }
+
         if (json_type::json_type_array != m_type)
         {
-            throw json_exception(_T("operator[] JsonType::eArray == m_Type"));
+            return _none_value;
+            //throw json_exception(_T("operator[] JsonType::eArray == m_Type"));
         }
 
         if (nullptr == m_data._array_ptr)
@@ -408,7 +513,8 @@ namespace fcjson
             m_data._array_ptr = new (std::nothrow) json_array;
             if (nullptr == m_data._array_ptr)
             {
-                throw json_exception(_T("operator[] nullptr == m_Data.Array"));
+                return _none_value;
+                //throw json_exception(_T("operator[] nullptr == m_Data.Array"));
             }
         }
 
@@ -425,12 +531,12 @@ namespace fcjson
         clear();
     }
 
-    json_type json_value::get_type() const
+    json_type json_value::type() const
     {
         return m_type;
     }
 
-    _tstring json_value::get_type_name() const
+    _tstring json_value::type_name() const
     {
         if (json_type::json_type_null == m_type) return _T("Null");
         if (json_type::json_type_bool == m_type) return _T("Bool");
@@ -620,6 +726,11 @@ namespace fcjson
 
     size_t json_value::count(const _tstring& name) const
     {
+        if (this == &_none_value)
+        {
+            return 0;
+        }
+
         if (name.empty())
         {
             if (json_type::json_type_object == m_type && m_data._object_ptr)

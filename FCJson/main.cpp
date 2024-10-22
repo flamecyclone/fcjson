@@ -17,7 +17,8 @@ int dump_indent = 4;
 
 int main()
 {
-    setlocale(LC_ALL, "en_US.UTF-8");
+    setlocale(LC_ALL, "zh_CN.UTF-8");
+    system("chcp 65001");
 
     // 构造 JSON 对象
     std::cout << "构造 JSON 对象" << std::endl;
@@ -43,6 +44,7 @@ int main()
         };
 
         // 序列化(不转义UNICODE字符)
+        std::string str_dump = val.dump(4, false);
         std::cout << val.dump(4, false) << std::endl;
 
         // 序列化(转义UNICODE字符)
@@ -56,12 +58,12 @@ int main()
         fcjson::json_value val;
         val = fcjson::json_array{ 1,2,3,4,5,6,7,8,9,0 };
         std::cout << "count: " << val.count() << std::endl;
-        std::cout << "type: " << val.get_type_name() << std::endl;
+        std::cout << "type: " << val.type_name() << std::endl;
         std::cout << val.dump(4, false) << std::endl;
 
         val = fcjson::json_object{{ "name", "我是地球🌍" }, { "age", 30 }};
         std::cout << "count: " << val.count() << std::endl;
-        std::cout << "type: " << val.get_type_name() << std::endl;
+        std::cout << "type: " << val.type_name() << std::endl;
         std::cout << val.dump(4, false) << std::endl;
     }
 
@@ -112,6 +114,33 @@ int main()
         fcjson::json_value val;
         val.parse_from_file("data.json");
         val.dump_to_file("dump.json", 4);
+    }
+
+    //多层嵌套
+    std::cout << std::endl;
+    std::cout << "多层嵌套" << std::endl;
+    {
+        fcjson::json_value val = fcjson::json_type::json_type_array;
+
+        val[0] = fcjson::json_type::json_type_array;
+        val[0][0] = fcjson::json_type::json_type_array;
+        val[0][0][0] = fcjson::json_type::json_type_object;
+
+        val[0][0][0]["string"] = "hello json";
+        val[0][0][0]["object"] = fcjson::json_type::json_type_object;
+        val[0][0][0]["object"]["name"] = "🌍FlameCyclone🌍";
+        val[0][0][0]["object"]["age"] = 30;
+
+        // 访问无效的元素将什么也不会发生
+        val[0][1][2][4][5][6][7][8][9][10][11][12][13][14][15] = "test";
+
+        std::cout << "type: " << val[0][1][2][4][5][6][7][8][9][10][11][12][13][14][15].type_name() << std::endl;
+        std::cout << "count: " << val[0][1][2][4][5][6][7][8][9][10][11][12][13][14][15].count() << std::endl;
+
+        // 序列化(转义UNICODE字符)
+        std::cout << val.dump(4, false) << std::endl;
+        std::cout << val.dump(4, true) << std::endl;
+
     }
 
     std::ifstream inputFile(TEST_JSON_FILE, std::ios::binary | std::ios::in);
