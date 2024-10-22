@@ -161,8 +161,6 @@ namespace fcjson
         // 检查与类型判断
         json_type get_type() const;
         _tstring get_type_name() const;
-        bool remove(const _tstring& name);
-        bool remove(const size_t index);
 
         // 类型判断
         bool is_null() const;
@@ -181,6 +179,18 @@ namespace fcjson
         json_string& as_string() const;
         json_object& as_object() const;
         json_array& as_array() const;
+
+        // 
+        // @brief: 移除对象子项
+        // @param: name                 子项名
+        // @ret: bool                   移除结果
+        bool remove(const _tstring& name);
+
+        // 
+        // @brief: 移除数组子项
+        // @param: index                数组索引
+        // @ret: bool                   移除结果
+        bool remove(const size_t index);
 
         // 
         // @brief: 获取本身或子项计数
@@ -211,8 +221,8 @@ namespace fcjson
         // @brief: 转储到文件
         // @param: file_path            文件路径
         // @param: indent               缩进空格数量
-        // @param: enc                  Unicode编码类型(UTF8或UTF16)
         // @param: flag_escape          是否转义非Ascii字符
+        // @param: enc                  Unicode编码类型(UTF8或UTF16)
         // @ret: std::wstring           转储文本
         bool dump_to_file(const _tstring& file_path, int indent = 0, bool flag_escape = false, json_encoding enc = json_encoding::json_encoding_auto);
 

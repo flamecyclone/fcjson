@@ -80,33 +80,10 @@ int main()
 
         //赋值
         fcjson["hobby"] = "C++";
-        std::cout << "type: " << fcjson.get_type_name() << std::endl;
-        std::cout << "count:" << fcjson.count() << std::endl;
-        std::cout << fcjson.dump(4, true) << std::endl;
-
-        fcjson["object"].clear();
-        fcjson["array"].clear();
-        std::cout << "type: " << fcjson.get_type_name() << std::endl;
-        std::cout << "count:" << fcjson.count() << std::endl;
-        std::cout << fcjson.dump(4, true) << std::endl;
-
         fcjson.remove("object");
-        std::cout << "type: " << fcjson.get_type_name() << std::endl;
-        std::cout << "count:" << fcjson.count() << std::endl;
-        std::cout << fcjson.dump(4, true) << std::endl;
-
-        //
         fcjson["hobby"] = nullptr;
-        std::cout << "type: " << fcjson.get_type_name() << std::endl;
-        std::cout << "count:" << fcjson.count() << std::endl;
-        std::cout << fcjson.dump(4, true) << std::endl;
 
-        //
-        fcjson.clear();
-        std::cout << "type: " << fcjson.get_type_name() << std::endl;
-        std::cout << "count:" << fcjson.count() << std::endl;
         std::cout << fcjson.dump(4, true) << std::endl;
-
     }
 
     // 解析文件/转储文件

@@ -1,7 +1,7 @@
 # fcjson
 
 ## 介绍
-自己尝试实现的精简的json解析库
+自己实现的极简的json解析库
 
 ## 软件架构
 Windows
@@ -43,7 +43,40 @@ C++11
 - ### 解析字符串/转储字符串
 
   ```c++
+  fcjson::json_value fcjson;
   
+  fcjson.parse(R"({"name":"FlameCyclone","age":30})");
+  std::string strJson = fcjson.dump(4, true);
+  std::cout << strJson << std::endl;
+  
+  // 访问数组
+  fcjson["array"] = fcjson::json_type::json_type_array;
+  auto& array = fcjson["array"];
+  for (int i = 0; i < 5; i++)
+  {
+      array[i] = i;
+  }
+  
+  // 删除数组元素
+  array.remove(4);
+  
+  // 访问对象
+  fcjson["object"] = fcjson::json_type::json_type_object;
+  auto& object = fcjson["object"];
+  for (int i = 0; i < 5; i++)
+  {
+      object[std::to_string(i)] = i;
+  }
+  
+  // 删除对象元素
+  object.remove("1");
+  
+  //赋值
+  fcjson["hobby"] = "C++";
+  fcjson.remove("object");
+  fcjson["hobby"] = nullptr;
+  
+  std::cout << fcjson.dump(4, true) << std::endl;
   ```
 
   
@@ -80,7 +113,7 @@ C++11
   
   int main()
   {
-      setlocale(LC_ALL, "");
+      setlocale(LC_ALL, "en_US.UTF-8");
   
       // 构造 JSON 对象
       {
@@ -104,28 +137,55 @@ C++11
               }
           };
   
-          // 序列化
-          std::string strJson = fcjson.dump(4, true);
-          std::cout << strJson << std::endl;
+          // 序列化(不转义UNICODE字符)
+          std::cout << fcjson.dump(4, false) << std::endl;
+  
+          // 序列化(转义UNICODE字符)
+          std::cout << fcjson.dump(4, true) << std::endl;
       }
   
-      // 赋值
+      // 解析字符串/转储字符串
       {
-          fcjson::json_value fcjson(fcjson::json_type::json_type_object);
+          fcjson::json_value fcjson;
   
-          fcjson["name"] = "FlameCyclone";
-          fcjson["age"] = 30;
-  
-          // 序列化
+          fcjson.parse(R"({"name":"FlameCyclone","age":30})");
           std::string strJson = fcjson.dump(4, true);
           std::cout << strJson << std::endl;
+  
+          // 访问数组
+          fcjson["array"] = fcjson::json_type::json_type_array;
+          auto& array = fcjson["array"];
+          for (int i = 0; i < 5; i++)
+          {
+              array[i] = i;
+          }
+  
+          // 删除数组元素
+          array.remove(4);
+  
+          // 访问对象
+          fcjson["object"] = fcjson::json_type::json_type_object;
+          auto& object = fcjson["object"];
+          for (int i = 0; i < 5; i++)
+          {
+              object[std::to_string(i)] = i;
+          }
+  
+          // 删除对象元素
+          object.remove("1");
+  
+          //赋值
+          fcjson["hobby"] = "C++";
+          fcjson.remove("object");
+          fcjson["hobby"] = nullptr;
+  
+          std::cout << fcjson.dump(4, true) << std::endl;
       }
   
       // 解析文件/转储文件
       {
           fcjson::json_value fcjson;
           fcjson.parse_from_file("data.json");
-  
           fcjson.dump_to_file("dump.json", 4);
       }
   
@@ -141,7 +201,6 @@ C++11
   
       std::string strBuffer(nSize, 0);
       inputFile.read((char*)&strBuffer[0], nSize);
-      size_t nByteSize = (size_t)inputFile.gcount();
       inputFile.close();
   
       // 性能测试
@@ -155,7 +214,7 @@ C++11
               fcjson::json_value fcjson;
               fcjson.parse_from_file("data.json");
   
-              std::cout << "fcjson" << std::endl;
+              std::cout << "fcjson 性能测试" << std::endl;
               timeBegin = clock();
               for (int i = 0; i < nCount; i++)
               {
@@ -191,7 +250,7 @@ C++11
   }
   
   ```
-
+  
   
 
 ## 参与贡献
