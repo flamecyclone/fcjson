@@ -51,8 +51,6 @@ namespace fcjson
 
 #endif
 
-    json_value json_value::_none_value(json_type::json_type_null);
-
     static std::string _get_utf8_text_for_code_point(uint32_t cp32);
     static bool _get_utf16_code_point(const _tchar* data_ptr, uint32_t* code_point_ptr, const _tchar** end_ptr);
     static bool _get_unicode_string(_tstring& append_buf, const _tchar* data_ptr, const _tchar** end_ptr);
@@ -61,6 +59,9 @@ namespace fcjson
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr);
     inline const _tchar* _skip_bom(const _tchar* data_ptr);
     static bool _skip_digit(const _tchar* data_ptr, const _tchar** end_ptr);
+
+    // 不存在的值, 用于下标运算符重载, 不抛出异常
+    static json_value _none_value(json_type::json_type_null);
 
     json_value::json_value()
         :
@@ -462,7 +463,7 @@ namespace fcjson
         return *this;
     }
 
-    json_value& json_value::operator[](const _tstring& name)
+    json_value& json_value::operator[](const _tstring& val_name) noexcept
     {
         if (this == &_none_value)
         {
@@ -485,17 +486,17 @@ namespace fcjson
             }
         }
 
-        auto it_find = m_data._object_ptr->find(name);
+        auto it_find = m_data._object_ptr->find(val_name);
         if (m_data._object_ptr->end() != it_find)
         {
             return it_find->second;
         }
 
-        auto it_insert = m_data._object_ptr->insert(std::make_pair(name, json_value()));
+        auto it_insert = m_data._object_ptr->insert(std::make_pair(val_name, json_value()));
         return it_insert.first->second;
     }
 
-    json_value& json_value::operator[](size_t index)
+    json_value& json_value::operator[](size_t index) noexcept
     {
         if (this == &_none_value)
         {

@@ -121,7 +121,6 @@ int main()
     std::cout << "多层嵌套" << std::endl;
     {
         fcjson::json_value val = fcjson::json_type::json_type_array;
-
         val[0] = fcjson::json_type::json_type_array;
         val[0][0] = fcjson::json_type::json_type_array;
         val[0][0][0] = fcjson::json_type::json_type_object;

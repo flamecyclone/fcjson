@@ -150,8 +150,10 @@ namespace fcjson
         json_value& operator = (json_object&& val);
         json_value& operator = (json_array&& val);
         json_value& operator = (json_value&& r) noexcept;
-        json_value& operator [] (const _tstring& name);
-        json_value& operator [] (size_t index);
+
+        // 下标重载, 访问不存在的索引会创建新的子项
+        json_value& operator [] (const _tstring& val_name) noexcept;
+        json_value& operator [] (size_t index) noexcept;
 
         // 清空
         void clear();
@@ -264,7 +266,5 @@ namespace fcjson
         }m_data;                            // 数据
 
         json_type    m_type;                // 类型(表示当前数据所属类型)
-
-        static json_value _none_value;      // 不存在的值
     };
 }
