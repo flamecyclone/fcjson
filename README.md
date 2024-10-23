@@ -269,30 +269,35 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   
   ```
   
-- ### 性能
+- ### Performance
 
   解析某个 2.7MB json文件对比
 
   ```c++
-  fcjson
-  fcjson parse cost time: 135ms
-  fcjson dump cost time: 39ms
-  fcjson size: 2850256
-  
-  nlohmann
-  nlohmann parse cost time: 97ms
-  nlohmann dump cost time: 33ms
-  nlohmann size: 2850256
-  
-  nomango
-  nomango parse cost time: 767ms
-  nomango dump cost time: 442ms
-  nomango size: 2850256
+fcjson
+fcjson parse cost time: 498
+fcjson dump cost time: 189
+fcjson size: 14150865
+
+rapidjson
+rapidjson parse cost time: 102
+rapidjson dump cost time: 154
+rapidjson size: 14150865
+
+nlohmann
+nlohmann parse cost time: 316
+nlohmann dump cost time: 165
+nlohmann size: 14150865
+
+jsonxx
+jsonxx parse cost time: 1381
+jsonxx dump cost time: 2027
+jsonxx size: 15973857
+
+nomango
+nomango parse cost time: 2124
+nomango dump cost time: 1227
+nomango size: 2850256
   ```
 
-  
-
-## 参与贡献
-
-- FlameCyclone
 
