@@ -1,7 +1,7 @@
 # fcjson
 
 ## Introduction
-Minimal JSON for C++
+JSON for C++
 
 ## Software Architecture
 C++11
