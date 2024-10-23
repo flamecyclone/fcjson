@@ -189,7 +189,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           // Delete Object Element
           object.remove("1");
   
-          //赋值
+          // Assignment
           val["hobby"] = "C++";
           val.remove("object");
           val["hobby"] = nullptr;
