@@ -1,21 +1,17 @@
 # fcjson
 
-## 介绍
-自己实现的极简的json解析库
+## Introduction
+Minimal JSON for C++
 
-## 软件架构
+## Software Architecture
 Windows
 C++11
 
-## 安装教程
+## Installation Guide
 
 将 fcjson.h 和 fcjson.cpp 添加到你得项目中引用即可
 
-## 使用说明
-
-- ### 引用
-
-- ### 构造
+## Usage Instructions
 
   ```c++
   fcjson::json_value val = fcjson::json_object{
@@ -41,7 +37,7 @@ C++11
 
   
 
-- ### 解析字符串/转储字符串
+- ### Parse string/dump string
 
   ```c++
   fcjson::json_value val;
@@ -82,7 +78,7 @@ C++11
 
   
 
-- ### 解析文件/转储文件
+- ### Parse/Dump
 
   ```c++
   fcjson::json_value val;
@@ -92,7 +88,7 @@ C++11
 
   
 
-- ### 例子
+- ### Example
 
   ```c++
   #include <iostream>
