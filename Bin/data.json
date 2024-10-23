@@ -1,40 +1,5 @@
 {
-    "a\\aa": "\u6211\u662f\u5730\u7403\ud83c\udf0d",
-    "null": null,
-    "bool_false": false,
-    "bool_true": true,
-    "int_min": -9223372036854775808,
-    "int_max": 9223372036854775807e34,
-    "uint_max": 18446744073709551615,
-    "double": 3.1415926535,
-    "string": "FlameCyclone",
-    "object": {
-        "null": false,
-        "bool_false": false,
-        "bool_true": true,
-        "int_min": -9223372036854775808,
-        "int_max": 9223372036854775807,
-        "double": 3.1415926535,
-        "string": "FlameCyclone",
-        "array": [
-            null,
-            false,
-            true,
-            -9223372036854775808,
-            9223372036854775807,
-            3.1415926535,
-            "FlameCyclone",
-            {
-                "null": false,
-                "bool_false": false,
-                "bool_true": true,
-                "int_min": -9223372036854775808,
-                "int_max": 9223372036854775807,
-                "double": 3.1415926535,
-                "string": "FlameCyclone"
-            }
-        ]
-    },
+    "a\\aa": "我是地球🌍",
     "array": [
         null,
         false,
@@ -44,13 +9,48 @@
         3.1415926535,
         "FlameCyclone",
         {
-            "null": false,
             "bool_false": false,
             "bool_true": true,
-            "int_min": -9223372036854775808,
-            "int_max": 9223372036854775807,
             "double": 3.1415926535,
+            "int_max": 9223372036854775807,
+            "int_min": -9223372036854775808,
+            "null": false,
             "string": "FlameCyclone"
         }
-    ]
+    ],
+    "bool_false": false,
+    "bool_true": true,
+    "double": 3.1415926535,
+    "int_max": 9.223372036854775e52,
+    "int_min": -9223372036854775808,
+    "null": null,
+    "object": {
+        "array": [
+            null,
+            false,
+            true,
+            -9223372036854775808,
+            9223372036854775807,
+            3.1415926535,
+            "FlameCyclone",
+            {
+                "bool_false": false,
+                "bool_true": true,
+                "double": 3.1415926535,
+                "int_max": 9223372036854775807,
+                "int_min": -9223372036854775808,
+                "null": false,
+                "string": "FlameCyclone"
+            }
+        ],
+        "bool_false": false,
+        "bool_true": true,
+        "double": 3.1415926535,
+        "int_max": 9223372036854775807,
+        "int_min": -9223372036854775808,
+        "null": false,
+        "string": "FlameCyclone"
+    },
+    "string": "FlameCyclone",
+    "uint_max": 18446744073709551615
 }

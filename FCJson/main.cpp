@@ -20,6 +20,15 @@ int main()
     setlocale(LC_ALL, "zh_CN.UTF-8");
     system("chcp 65001");
 
+    // 解析文件/转储文件
+    std::cout << std::endl;
+    std::cout << "解析文件/转储文件" << std::endl;
+    {
+        fcjson::json_value val;
+        val.parse_from_file("data.json");
+        val.dump_to_file("dump.json", 4);
+    }
+
     // 构造 JSON 对象
     std::cout << "构造 JSON 对象" << std::endl;
     {
@@ -107,15 +116,6 @@ int main()
         std::cout << val.dump(4, true) << std::endl;
     }
 
-    // 解析文件/转储文件
-    std::cout << std::endl;
-    std::cout << "解析文件/转储文件" << std::endl;
-    {
-        fcjson::json_value val;
-        val.parse_from_file("data.json");
-        val.dump_to_file("dump.json", 4);
-    }
-
     //多层嵌套
     std::cout << std::endl;
     std::cout << "多层嵌套" << std::endl;
@@ -163,11 +163,13 @@ int main()
 
     std::cout << std::endl;
     std::cout << "性能测试" << std::endl;
+
+    std::string strText;
+
     while (true)
     {
         {
             fcjson::json_value val;
-            val.parse_from_file("data.json");
 
             timeBegin = clock();
             for (int i = 0; i < nCount; i++)
@@ -181,7 +183,7 @@ int main()
             std::string strDump;
             for (int i = 0; i < nCount; i++)
             {
-                strDump = val.dump(dump_indent);
+                strDump = val.dump(dump_indent, false);
             }
             timeEnd = clock();
             std::cout << "dump cost time: " << timeEnd - timeBegin << std::endl;

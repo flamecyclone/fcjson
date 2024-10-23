@@ -53,7 +53,7 @@ namespace fcjson
 
     static std::string _get_utf8_text_for_code_point(uint32_t cp32);
     static bool _get_utf16_code_point(const _tchar* data_ptr, uint32_t* code_point_ptr, const _tchar** end_ptr);
-    static bool _get_unicode_string(_tstring& append_buf, const _tchar* data_ptr, const _tchar** end_ptr);
+    static bool _get_unicode_string(_tstring& apend_ptr_buf, const _tchar* data_ptr, const _tchar** end_ptr);
     static int32_t _utf8_to_utf16(const void* data_ptr, size_t size = -1, std::string* text_utf8_ptr = nullptr, std::wstring* text_utf16_ptr = nullptr);
     static int32_t _utf16_to_utf8(const void* data_ptr, size_t size = -1, std::string* text_utf8_ptr = nullptr, std::wstring* text_utf16_ptr = nullptr);
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr);
@@ -1034,25 +1034,25 @@ namespace fcjson
         return true;
     }
 
-    void json_value::_dump_int(_tstring& append_buf, int64_t val) const
+    void json_value::_dump_int(_tstring& apend_ptr_buf, int64_t val) const
     {
         _tchar out_buffer[64] = { 0 };
         size_t length = _stprintf_s(out_buffer, 64, _T(FC_JSON_INT64_FORMAT), val);
-        append_buf += out_buffer;
+        apend_ptr_buf.append(out_buffer, length);
     }
 
-    void json_value::_dump_uint(_tstring& append_buf, uint64_t val) const
+    void json_value::_dump_uint(_tstring& apend_ptr_buf, uint64_t val) const
     {
         _tchar out_buffer[64] = { 0 };
         size_t length = _stprintf_s(out_buffer, 64, _T(FC_JSON_UINT64_FORMAT), val);
-        append_buf += out_buffer;
+        apend_ptr_buf.append(out_buffer, length);
     }
 
-    void json_value::_dump_float(_tstring& append_buf, double val) const
+    void json_value::_dump_float(_tstring& apend_ptr_buf, double val) const
     {
         _tchar out_buffer[64] = { 0 };
         size_t length = _stprintf_s(out_buffer, 64, _T(FC_JSON_FLOAT_FORMAT), val);
-        append_buf += out_buffer;
+        apend_ptr_buf.append(out_buffer, length);
 
         _tchar* ch_ptr = out_buffer;
         bool flag_dot = false;
@@ -1074,11 +1074,11 @@ namespace fcjson
 
         if (!flag_dot && 0 == !flag_exponent)
         {
-            append_buf += _T(".0");
+            apend_ptr_buf += _T(".0");
         }
     }
 
-    void json_value::_dump_string(_tstring& append_buf, const _tstring& text, bool flag_escape) const
+    void json_value::_dump_string(_tstring& apend_ptr_buf, const _tstring& text, bool flag_escape) const
     {
         const _tchar* data_ptr = text.c_str();
 
@@ -1088,45 +1088,45 @@ namespace fcjson
 
             if (_T('\"') == ch)
             {
-                append_buf += _T(R"(\")");
+                apend_ptr_buf += _T(R"(\")");
             }
             else if (_T('\\') == ch)
             {
-                append_buf += _T(R"(\\)");
+                apend_ptr_buf += _T(R"(\\)");
             }
             else if (_T('/') == ch)
             {
-                append_buf += _T(R"(/)");
+                apend_ptr_buf += _T(R"(/)");
             }
             else if (_T('\b') == ch)
             {
-                append_buf += _T(R"(\b)");
+                apend_ptr_buf += _T(R"(\b)");
             }
             else if (_T('\f') == ch)
             {
-                append_buf += _T(R"(\f)");
+                apend_ptr_buf += _T(R"(\f)");
             }
             else if (_T('\n') == ch)
             {
-                append_buf += _T(R"(\n)");
+                apend_ptr_buf += _T(R"(\n)");
             }
             else if (_T('\r') == ch)
             {
-                append_buf += _T(R"(\r)");
+                apend_ptr_buf += _T(R"(\r)");
             }
             else if (_T('\t') == ch)
             {
-                append_buf += _T(R"(\t)");
+                apend_ptr_buf += _T(R"(\t)");
             }
             else
             {
                 if (ch < 0x80 || !flag_escape)
                 {
-                    append_buf.push_back(ch);
+                    apend_ptr_buf.push_back(ch);
                 }
                 else
                 {
-                    _get_unicode_string(append_buf, data_ptr, &data_ptr);
+                    _get_unicode_string(apend_ptr_buf, data_ptr, &data_ptr);
                     continue;
                 }
             }
@@ -1135,103 +1135,111 @@ namespace fcjson
         }
     }
 
-    void json_value::_dump_object(_tstring& append_buf, int depth, int indent, bool flag_escape) const
+    void json_value::_dump_object(_tstring& apend_ptr_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const
     {
         const json_object& object = *m_data._object_ptr;
         size_t size = object.size();
 
-        append_buf += _T("{");
+        apend_ptr_buf += _T("{");
         if (indent > 0)
         {
             depth++;
 
-            _tstring indent_text(depth * indent, _T(' '));
-            append_buf += _T(FC_JSON_RETURN);
+            if (indent_text.size() <= depth)
+            {
+                indent_text.emplace_back(_tstring(depth * indent, _T(' ')));
+            }
+
+            apend_ptr_buf += _T(FC_JSON_RETURN);
 
             for (const auto& item : object)
             {
-                append_buf += indent_text;
-                append_buf += _T("\"");
-                _dump_string(append_buf, item.first, flag_escape);
-                append_buf += _T("\": ");
-                item.second._dump(append_buf, depth, indent, flag_escape);
+                apend_ptr_buf += indent_text[depth];
+                apend_ptr_buf += _T("\"");
+                _dump_string(apend_ptr_buf, item.first, flag_escape);
+                apend_ptr_buf += _T("\": ");
+                item.second._dump(apend_ptr_buf, indent_text, depth, indent, flag_escape);
                 size--;
 
                 if (0 != size)
                 {
-                    append_buf += _T(",");
+                    apend_ptr_buf += _T(",");
                 }
 
-                append_buf += _T(FC_JSON_RETURN);
+                apend_ptr_buf += _T(FC_JSON_RETURN);
             }
 
             depth--;
-            append_buf += _tstring(depth * indent, _T(' '));
+            apend_ptr_buf += indent_text[depth];
         }
         else
         {
             for (const auto& item : object)
             {
-                append_buf += _T("\"");
-                _dump_string(append_buf, item.first, flag_escape);
-                append_buf += _T("\":");
-                item.second._dump(append_buf, depth, indent, flag_escape);
+                apend_ptr_buf += _T("\"");
+                _dump_string(apend_ptr_buf, item.first, flag_escape);
+                apend_ptr_buf += _T("\":");
+                item.second._dump(apend_ptr_buf, indent_text, depth, indent, flag_escape);
                 size--;
 
                 if (0 != size)
                 {
-                    append_buf += _T(",");
+                    apend_ptr_buf += _T(",");
                 }
             }
         }
-        append_buf += _T("}");
+        apend_ptr_buf += _T("}");
     }
 
-    void json_value::_dump_array(_tstring& append_buf, int depth, int indent, bool flag_escape) const
+    void json_value::_dump_array(_tstring& apend_ptr_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const
     {
         json_array& array = *m_data._array_ptr;
         size_t size = array.size();
 
-        append_buf += _T("[");
+        apend_ptr_buf += _T("[");
         if (indent > 0)
         {
             depth++;
 
-            _tstring indent_text(depth * indent, _T(' '));
-            append_buf += _T(FC_JSON_RETURN);
+            if (indent_text.size() <= depth)
+            {
+                indent_text.emplace_back(_tstring(depth * indent, _T(' ')));
+            }
+
+            apend_ptr_buf += _T(FC_JSON_RETURN);
 
             for (const auto& item : array)
             {
-                append_buf += indent_text;
-                item._dump(append_buf, depth, indent, flag_escape);
+                apend_ptr_buf += indent_text[depth];
+                item._dump(apend_ptr_buf, indent_text, depth, indent, flag_escape);
                 size--;
                 if (0 != size)
                 {
-                    append_buf += _T(",");
+                    apend_ptr_buf += _T(",");
                 }
 
-                append_buf += _T(FC_JSON_RETURN);
+                apend_ptr_buf += _T(FC_JSON_RETURN);
             }
 
             depth--;
-            append_buf += _tstring(depth * indent, _T(' '));
+            apend_ptr_buf += indent_text[depth];
         }
         else
         {
             for (const auto& item : array)
             {
-                item._dump(append_buf, depth, indent, flag_escape);
+                item._dump(apend_ptr_buf, indent_text, depth, indent, flag_escape);
                 size--;
                 if (0 != size)
                 {
-                    append_buf += _T(",");
+                    apend_ptr_buf += _T(",");
                 }
             }
         }
-        append_buf += _T("]");
+        apend_ptr_buf += _T("]");
     }
 
-    void json_value::_dump(_tstring& append_buf, int depth, int indent, bool flag_escape) const
+    void json_value::_dump(_tstring& apend_ptr_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const
     {
         if (indent < 0)
         {
@@ -1244,13 +1252,13 @@ namespace fcjson
             {
                 if (nullptr == m_data._array_ptr)
                 {
-                    append_buf += _T("[]");
+                    apend_ptr_buf += _T("[]");
                     break;
                 }
 
                 if (m_data._array_ptr->empty())
                 {
-                    append_buf += _T("[]");
+                    apend_ptr_buf += _T("[]");
                     break;
                 }
             }
@@ -1259,50 +1267,50 @@ namespace fcjson
             {
                 if (nullptr == m_data._object_ptr)
                 {
-                    append_buf += _T("{}");
+                    apend_ptr_buf += _T("{}");
                     break;
                 }
 
                 if (m_data._object_ptr->empty())
                 {
-                    append_buf += _T("{}");
+                    apend_ptr_buf += _T("{}");
                     break;
                 }
             }
 
             if (is_null())
             {
-                append_buf += _T("null");
+                apend_ptr_buf += _T("null");
             }
             else if (is_bool())
             {
-                append_buf += m_data._bool ? _T("true") : _T("false");
+                apend_ptr_buf += m_data._bool ? _T("true") : _T("false");
             }
             else if (json_type::json_type_int == m_type)
             {
-                _dump_int(append_buf, m_data._int);
+                _dump_int(apend_ptr_buf, m_data._int);
             }
             else if (json_type::json_type_uint == m_type)
             {
-                _dump_uint(append_buf, m_data._uint);
+                _dump_uint(apend_ptr_buf, m_data._uint);
             }
             else if (is_float())
             {
-                _dump_float(append_buf, m_data._float);
+                _dump_float(apend_ptr_buf, m_data._float);
             }
             else if (is_string())
             {
-                append_buf += _T("\"");
-                _dump_string(append_buf, *m_data._string_ptr, flag_escape);
-                append_buf += _T("\"");
+                apend_ptr_buf += _T("\"");
+                _dump_string(apend_ptr_buf, *m_data._string_ptr, flag_escape);
+                apend_ptr_buf += _T("\"");
             }
             else if (is_object())
             {
-                _dump_object(append_buf, depth, indent, flag_escape);
+                _dump_object(apend_ptr_buf, indent_text, depth, indent, flag_escape);
             }
             else if (is_array())
             {
-                _dump_array(append_buf, depth, indent, flag_escape);
+                _dump_array(apend_ptr_buf, indent_text, depth, indent, flag_escape);
             }
 
         } while (false);
@@ -1311,17 +1319,20 @@ namespace fcjson
     _tstring json_value::dump(int indent/* = 0*/, bool flag_escape/* = false*/) const
     {
         _tstring result_text;
-        _dump(result_text, 0, indent, flag_escape);
+        std::vector<_tstring> indent_text({_T("")});
+        _dump(result_text, indent_text, 0, indent, flag_escape);
         return std::move(result_text);
     }
 
     bool json_value::dump_to_file(const _tstring& strPath, int indent/* = 0*/, bool flag_escape/* = false*/, json_encoding encoding/* = json_encoding::json_encoding_auto*/)
     {
+        _tstring dump_text;
+        std::vector<_tstring> indent_text({_T("")});
+        _dump(dump_text, indent_text, 0, indent, flag_escape);
+
         std::string str_utf8;
         std::wstring str_utf16;
         _tstring result_text;
-        _tstring dump_text;
-        _dump(dump_text, 0, indent, flag_escape);
 
         //str_utf8.push_back((uint8_t)0xEF);
         //str_utf8.push_back((uint8_t)0xBB);
@@ -1383,7 +1394,7 @@ namespace fcjson
     json_value json_value::parse(const _tstring& text)
     {
         const _tchar* end_ptr = nullptr;
-        *this = std::move(_parse(text.c_str(), &end_ptr));
+        _parse(text.c_str(), *this, &end_ptr);
         return *this;
     }
 
@@ -1452,7 +1463,7 @@ namespace fcjson
         } while (false);
 
         const _tchar* end_ptr = nullptr;
-        *this = std::move(_parse(read_text.c_str(), &end_ptr));
+        _parse(read_text.c_str(), *this, &end_ptr);
         return *this;
     }
 
@@ -1573,7 +1584,6 @@ namespace fcjson
         size_t nIndex = 0;
         while (_T('\0') != *data_ptr)
         {
-            json_value value_data;
             data_ptr = _skip_whitespace(data_ptr);
             if (_T(']') == *data_ptr)
             {
@@ -1582,6 +1592,7 @@ namespace fcjson
                 break;
             }
 
+            json_value value_data;
             if (!_parse_value(data_ptr, value_data, &data_ptr))
             {
                 break;
@@ -1590,19 +1601,12 @@ namespace fcjson
             if (nullptr == result_val.m_data._array_ptr)
             {
                 result_val.m_data._array_ptr = new (std::nothrow) json_array;
-                if (nullptr == result_val.m_data._array_ptr)
-                {
-                    continue;
-                }
             }
 
-            json_array& json_array = *result_val.m_data._array_ptr;
-            if (json_array.size() <= nIndex)
+            if (result_val.m_data._array_ptr)
             {
-                json_array.resize(nIndex + 1);
+                result_val.m_data._array_ptr->emplace_back(std::move(value_data));
             }
-
-            json_array[nIndex] = std::move(value_data);
 
             data_ptr = _skip_whitespace(data_ptr);
             if (_T(',') == *data_ptr)
@@ -1706,15 +1710,18 @@ namespace fcjson
         return result_flag;
     }
 
-    json_value json_value::_parse(const _tchar* data_ptr, const _tchar** end_ptr)
+    bool json_value::_parse(const _tchar* data_ptr, json_value& val, const _tchar** end_ptr)
     {
-        json_value result_val;
-
+        bool result_flag = false;
         data_ptr = _skip_bom(data_ptr);
-        _parse_value(data_ptr, result_val, &data_ptr);
+        _parse_value(data_ptr, val, &data_ptr);
         if (_T('\0') != *data_ptr)
         {
-            result_val = json_type::json_type_null;
+            val = json_type::json_type_null;
+        }
+        else
+        {
+            result_flag = true;
         }
 
         if (end_ptr)
@@ -1722,7 +1729,7 @@ namespace fcjson
             *end_ptr = data_ptr;
         }
 
-        return result_val;
+        return result_flag;
     }
 
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr)
@@ -1802,39 +1809,47 @@ namespace fcjson
         return result_flag;
     }
 
-    bool _get_unicode_string(_tstring& append_buf, const _tchar* data_ptr, const _tchar** end_ptr)
+    bool _get_unicode_string(_tstring& apend_ptr_buf, const _tchar* data_ptr, const _tchar** end_ptr)
     {
         _utchar ch = *data_ptr;
 
 #ifdef _UNICODE
         _tchar text_buffer[32] = { 0 };
         _stprintf_s(text_buffer, sizeof(text_buffer) / sizeof(_tchar), _T(R"(\u%.4x)"), ch);
-        append_buf += text_buffer;
+        apend_ptr_buf += text_buffer;
         data_ptr++;
 
 #else
         if (ch >= 0xC0)
         {
-            uint8_t utf8_code_mask = 0xC0;     // 11000000
-            uint8_t utf8_data_mask = 0x1F;      // 000xxxxx
-            int nCount = 2;                 // 有效字节数量: 2-6
-
             // 检索字符使用的字节数量
             size_t byte_count = 0;
             uint32_t cp32 = 0;
-            while (utf8_code_mask <= 0xFC)
-            {
-                uint8_t utf8_mask_max = utf8_code_mask | utf8_data_mask;
-                if (ch >= utf8_code_mask && ch <= utf8_mask_max)
-                {
-                    cp32 = ch & utf8_data_mask;
-                    byte_count = nCount;
-                    break;
-                }
 
-                utf8_code_mask = (utf8_code_mask >> 1) | 0x80;
-                utf8_data_mask = utf8_data_mask >> 1;
-                nCount++;
+            if (ch >= 0xC0 && ch <= 0xDF)
+            {
+                byte_count = 2;
+                cp32 = ch & 0x1F;
+            }
+            else if (ch >= 0xE0 && ch <= 0xEF)
+            {
+                byte_count = 3;
+                cp32 = ch & 0x0F;
+            }
+            else if (ch >= 0xF0 && ch <= 0xF7)
+            {
+                byte_count = 4;
+                cp32 = ch & 0x07;
+            }
+            else if (ch >= 0xF8 && ch <= 0xFB)
+            {
+                byte_count = 5;
+                cp32 = ch & 0x03;
+            }
+            else if (ch >= 0xFC && ch <= 0xFD)
+            {
+                byte_count = 6;
+                cp32 = ch & 0x01;
             }
 
             if (0 == byte_count)
@@ -1852,7 +1867,7 @@ namespace fcjson
             if (cp32 < 0x10000)
             {
                 snprintf(text_buffer, sizeof(text_buffer), R"(\u%.4x)", cp32);
-                append_buf += text_buffer;
+                apend_ptr_buf.append(text_buffer, 6);
             }
             else
             {
@@ -1860,15 +1875,11 @@ namespace fcjson
                 uint16_t cp32_high = (uint16_t)(cp >> 10) + 0xD800;
                 uint16_t cp32_low = (uint16_t)(cp & 0x3FF) + 0xDC00;
 
-                snprintf(text_buffer, sizeof(text_buffer), R"(\u%.4x)", cp32_high);
-                append_buf += text_buffer;
-
-                snprintf(text_buffer, sizeof(text_buffer), R"(\u%.4x)", cp32_low);
-                append_buf += text_buffer;
+                snprintf(text_buffer, sizeof(text_buffer), R"(\u%.4x\u%.4x)", cp32_high, cp32_low);
+                apend_ptr_buf.append(text_buffer, 12);
             }
 
             data_ptr += byte_count;
-
         }
 #endif
 

@@ -274,6 +274,27 @@ C++11
   
   ```
   
+- ### 性能
+
+  解析某个 2.7MB json文件对比
+
+  ```c++
+  fcjson
+  fcjson parse cost time: 135ms
+  fcjson dump cost time: 39ms
+  fcjson size: 2850256
+  
+  nlohmann
+  nlohmann parse cost time: 97ms
+  nlohmann dump cost time: 33ms
+  nlohmann size: 2850256
+  
+  nomango
+  nomango parse cost time: 767ms
+  nomango dump cost time: 442ms
+  nomango size: 2850256
+  ```
+
   
 
 ## 参与贡献
