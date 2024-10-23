@@ -4,12 +4,11 @@
 Minimal JSON for C++
 
 ## Software Architecture
-Windows
 C++11
 
 ## Installation Guide
 
-将 fcjson.h 和 fcjson.cpp 添加到你得项目中引用即可
+Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
 
 ## Usage Instructions
 
