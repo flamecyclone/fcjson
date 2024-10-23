@@ -45,7 +45,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   std::string strJson = val.dump(4, true);
   std::cout << strJson << std::endl;
   
-  // 访问数组
+  // Accessing an array
   val["array"] = fcjson::json_type::json_type_array;
   auto& array = val["array"];
   for (int i = 0; i < 5; i++)
@@ -53,10 +53,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
       array[i] = i;
   }
   
-  // 删除数组元素
+  // Delete array element
   array.remove(4);
   
-  // 访问对象
+  // Access array element
   val["object"] = fcjson::json_type::json_type_object;
   auto& object = val["object"];
   for (int i = 0; i < 5; i++)
@@ -64,10 +64,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
       object[std::to_string(i)] = i;
   }
   
-  // 删除对象元素
+  // Delete object element
   object.remove("1");
   
-  //赋值
+  // Assignment
   val["hobby"] = "C++";
   val.remove("object");
   val["hobby"] = nullptr;
@@ -111,8 +111,8 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   {
       setlocale(LC_ALL, "en_US.UTF-8");
   
-      // 构造 JSON 对象
-      std::cout << "构造 JSON 对象" << std::endl;
+      // Construct a JSON object
+      std::cout << "Construct a JSON object" << std::endl;
       {
           fcjson::json_value val = fcjson::json_object{
               { "null", nullptr},
@@ -134,16 +134,16 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
               }
           };
   
-          // 序列化(不转义UNICODE字符)
+          // Serialize (without escaping UNICODE characters)
           std::cout << val.dump(4, false) << std::endl;
   
-          // 序列化(转义UNICODE字符)
+          // Serialization (with escaping UNICODE characters)
           std::cout << val.dump(4, true) << std::endl;
       }
   
-      // 赋值操作
+      // Assignment Operation
       std::cout << std::endl;
-      std::cout << "赋值操作" << std::endl;
+      std::cout << "Assignment Operation" << std::endl;
       {
           fcjson::json_value val;
           val = fcjson::json_array{ 1,2,3,4,5,6,7,8,9,0 };
@@ -157,9 +157,9 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           std::cout << val.dump(4, false) << std::endl;
       }
   
-      // 解析字符串/转储字符串
+      // Parse String / Dump String
       std::cout << std::endl;
-      std::cout << "解析字符串/转储字符串" << std::endl;
+      std::cout << "Parse String / Dump String" << std::endl;
       {
           fcjson::json_value val;
   
@@ -167,7 +167,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           std::string strJson = val.dump(4, true);
           std::cout << strJson << std::endl;
   
-          // 访问数组
+          // Access Array
           val["array"] = fcjson::json_type::json_type_array;
           auto& array = val["array"];
           for (int i = 0; i < 5; i++)
@@ -175,10 +175,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
               array[i] = i;
           }
   
-          // 删除数组元素
+          // Delete Array Element
           array.remove(4);
   
-          // 访问对象
+          // Access Object
           val["object"] = fcjson::json_type::json_type_object;
           auto& object = val["object"];
           for (int i = 0; i < 5; i++)
@@ -186,7 +186,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
               object[std::to_string(i)] = i;
           }
   
-          // 删除对象元素
+          // Delete Object Element
           object.remove("1");
   
           //赋值
@@ -197,9 +197,9 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           std::cout << val.dump(4, true) << std::endl;
       }
   
-      // 解析文件/转储文件
+      // Parse File / Dump File
       std::cout << std::endl;
-      std::cout << "解析文件/转储文件" << std::endl;
+      std::cout << "Parse File / Dump File" << std::endl;
       {
           fcjson::json_value val;
           val.parse_from_file("data.json");
@@ -220,13 +220,13 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
       inputFile.read((char*)&strBuffer[0], nSize);
       inputFile.close();
   
-      // 性能测试
+      // Performance Testing
       size_t nCount = count;
       clock_t timeBegin = clock();
       clock_t timeEnd = clock();
   
       std::cout << std::endl;
-      std::cout << "性能测试" << std::endl;
+      std::cout << "Performance Testing" << std::endl;
       while (true)
       {
           {
@@ -271,7 +271,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   
 - ### Performance
 
-  解析某个 2.7MB json文件对比
+ Performance comparison
 
   ```c++
 fcjson
