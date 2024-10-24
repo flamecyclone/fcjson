@@ -1427,18 +1427,19 @@ namespace fcjson
 
     bool json_value::parse(const _tstring& text)
     {
+        clear();
         const _tchar* end_ptr = nullptr;
         return _parse(text.c_str(), *this, &end_ptr);
     }
 
     bool json_value::parse_from_file(const _tstring& strPath)
     {
+
         std::string str_utf8;
         std::wstring str_utf16;
         _tstring read_text;
 
-        *this = json_type::json_type_null;
-
+        clear();
         do
         {
             std::ifstream input_file(strPath, std::ios::binary | std::ios::in);
