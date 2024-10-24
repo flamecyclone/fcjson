@@ -90,11 +90,11 @@ namespace fcjson
     enum json_type
     {
         json_type_null,              // null
-        json_type_string,            // "FlameCyclone"
+        json_type_bool,              // true Or false
         json_type_int,               // 0 - 9223372036854775807 Or -1 - (9223372036854775807 - 1)
         json_type_uint,              // 0 - 18446744073709551615
         json_type_float,             // 3.141592653589793
-        json_type_bool,              // true Or false
+        json_type_string,            // "FlameCyclone"
         json_type_object,            // [128,256,512,1204,"string",{"name":"FlameCyclone"}]
         json_type_array,             // {"name":"FlameCyclone"}
     };

@@ -25,6 +25,46 @@
 
 namespace fcjson
 {
+    // UTF-8 Byte count table
+    unsigned char g_utf8_bytes_count_table[0x100] = {
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,01,
+        00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,
+        00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,
+        00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,
+        00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,
+        02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,
+        02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,02,
+        03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,03,
+        04,04,04,04,04,04,04,04,05,05,05,05,06,06,00,00,
+    };
+
+    // UTF-8 Data mask table
+    unsigned char g_utf8_data_mask_table[0x100] = {
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+        0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,
+        0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,0x1F,
+        0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,0x0F,
+        0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x07,0x03,0x03,0x03,0x03,0x01,0x01,0x00,0x00,
+    };
+
 #ifdef _UNICODE
 
 #define _istxdigit          std::iswxdigit
@@ -187,21 +227,28 @@ namespace fcjson
     {
         m_type = r.m_type;
 
-        if (json_type::json_type_string == m_type && r.m_data._string_ptr)
+        switch (m_type)
+        {
+        case json_type::json_type_string:
         {
             m_data._string_ptr = new (std::nothrow) json_string(*r.m_data._string_ptr);
         }
-        else if (json_type::json_type_object == m_type && r.m_data._object_ptr)
+        break;
+        case json_type::json_type_object:
         {
             m_data._object_ptr = new (std::nothrow) json_object(*r.m_data._object_ptr);
         }
-        else if (json_type::json_type_array == m_type && r.m_data._array_ptr)
+        break;
+        case json_type::json_type_array:
         {
             m_data._array_ptr = new (std::nothrow) json_array(*r.m_data._array_ptr);
         }
-        else
+        break;
+        default:
         {
             m_data = r.m_data;
+        }
+        break;
         }
     }
 
@@ -412,21 +459,28 @@ namespace fcjson
             clear();
             m_type = r.m_type;
 
-            if (json_type::json_type_string == m_type && r.m_data._string_ptr)
+            switch (m_type)
+            {
+            case json_type::json_type_string:
             {
                 m_data._string_ptr = new (std::nothrow) json_string(*r.m_data._string_ptr);
             }
-            else if (json_type::json_type_object == m_type && r.m_data._object_ptr)
+            break;
+            case json_type::json_type_object:
             {
                 m_data._object_ptr = new (std::nothrow) json_object(*r.m_data._object_ptr);
             }
-            else if (json_type::json_type_array == m_type && r.m_data._array_ptr)
+            break;
+            case json_type::json_type_array:
             {
                 m_data._array_ptr = new (std::nothrow) json_array(*r.m_data._array_ptr);
             }
-            else
+            break;
+            default:
             {
                 m_data = r.m_data;
+            }
+            break;
             }
         }
 
@@ -738,17 +792,23 @@ namespace fcjson
     {
         if (json_type::json_type_null != m_type)
         {
-            if (json_type::json_type_string == m_type && m_data._string_ptr)
+            switch (m_type)
+            {
+            case json_type::json_type_string:
             {
                 delete m_data._string_ptr;
             }
-            else if (json_type::json_type_object == m_type && m_data._object_ptr)
+            break;
+            case json_type::json_type_object:
             {
                 delete m_data._object_ptr;
             }
-            else if (json_type::json_type_array == m_type && m_data._array_ptr)
+            break;
+            case json_type::json_type_array:
             {
                 delete m_data._array_ptr;
+            }
+            break;
             }
 
             m_data = { 0 };
@@ -1110,29 +1170,14 @@ namespace fcjson
 
             switch (ch)
             {
-            case _T('\"'):
-            {
-                append_str += _T(R"(\")");
-            }
-            break;
-            case _T('\\'):
-            {
-                append_str += _T(R"(\\")");
-            }
-            break;
-            case _T('/'):
-            {
-                append_str += _T(R"(/)");
-            }
-            break;
             case _T('\b'):
             {
                 append_str += _T(R"(\b)");
             }
             break;
-            case _T('\f'):
+            case _T('\t'):
             {
-                append_str += _T(R"(\f)");
+                append_str += _T(R"(\t)");
             }
             break;
             case _T('\n'):
@@ -1140,14 +1185,28 @@ namespace fcjson
                 append_str += _T(R"(\n)");
             }
             break;
+            case _T('\f'):
+            {
+                append_str += _T(R"(\f)");
+            }
+            break;
             case _T('\r'):
             {
                 append_str += _T(R"(\r)");
             }
             break;
-            case _T('\t'):
+            case _T('\"'):
             {
-                append_str += _T(R"(\t)");
+                append_str += _T(R"(\")");
+            }
+            break;
+            case _T('/'):
+            {
+                append_str += _T(R"(/)");
+            }
+            case _T('\\'):
+            {
+                append_str += _T(R"(\\")");
             }
             break;
             default:
@@ -1706,7 +1765,15 @@ namespace fcjson
             break;
             default:
             {
-                if (0 == _tcsncmp(_T("null"), data_ptr, 4))
+                if (_istdigit(ch))
+                {
+                    if (!_parse_number(data_ptr, val, &data_ptr))
+                    {
+                        abort_flag = true;
+                        break;
+                    }
+                }
+                else if (0 == _tcsncmp(_T("null"), data_ptr, 4))
                 {
                     val = json_value(json_type::json_type_null);
                     data_ptr += 4;
@@ -1720,14 +1787,6 @@ namespace fcjson
                 {
                     val = false;
                     data_ptr += 5;
-                }
-                else if (_istdigit(ch))
-                {
-                    if (!_parse_number(data_ptr, val, &data_ptr))
-                    {
-                        abort_flag = true;
-                        break;
-                    }
                 }
                 else
                 {
@@ -1839,34 +1898,9 @@ namespace fcjson
         if (ch >= 0xC0)
         {
             // The number of bytes used to obtain characters.
-            size_t byte_count = 0;
+            size_t byte_count = g_utf8_bytes_count_table[ch];
             uint32_t cp32 = 0;
-
-            if (ch >= 0xC0 && ch <= 0xDF)
-            {
-                byte_count = 2;
-                cp32 = ch & 0x1F;
-            }
-            else if (ch >= 0xE0 && ch <= 0xEF)
-            {
-                byte_count = 3;
-                cp32 = ch & 0x0F;
-            }
-            else if (ch >= 0xF0 && ch <= 0xF7)
-            {
-                byte_count = 4;
-                cp32 = ch & 0x07;
-            }
-            else if (ch >= 0xF8 && ch <= 0xFB)
-            {
-                byte_count = 5;
-                cp32 = ch & 0x03;
-            }
-            else if (ch >= 0xFC && ch <= 0xFD)
-            {
-                byte_count = 6;
-                cp32 = ch & 0x01;
-            }
+            cp32 = ch & g_utf8_data_mask_table[ch];
 
             if (0 == byte_count)
             {
