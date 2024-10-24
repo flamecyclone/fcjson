@@ -1227,7 +1227,7 @@ namespace fcjson
 
     void json_value::_dump_array(_tstring& apend_ptr_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const
     {
-        json_array& array = *m_data._array_ptr;
+        const json_array& array = *m_data._array_ptr;
         size_t size = array.size();
 
         apend_ptr_buf += _T("[");
