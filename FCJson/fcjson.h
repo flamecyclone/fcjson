@@ -9,15 +9,15 @@
 #include <vector>
 #include <map>
 
-// VS 将执行字符集指定为 UTF-8
-// 项目属性页 -> 配置属性 -> C/C++ -> 命令行 -> 其他选项(D) 
-// 加入 /execution-charset:utf-8 或/utf-8
+// VS sets the execution character set to UTF-8
+// Project Property Pages -> Configuration Properties -> C/C++ -> Command Line -> Additional Options (D)
+// Add /execution-charset:utf-8 or /utf-8
 //
 
-// 此编译器指令在 Visual Studio 2015 Update 2 及更高版本中已过时
+// This compiler directive is obsolete in Visual Studio 2015 Update 2 and later.
 // #pragma execution_character_set("utf-8")
 
-// JSON规范: https://www.json.org/json-zh.html
+// JSON specification: https://www.json.org/json-zh.html
 
 #ifdef _UNICODE
 
@@ -49,7 +49,7 @@ using _utchar = unsigned char;
 #define FC_JSON_UINT64_FORMAT       "%lu"
 #endif
 
-// JSON 解析
+// JSON Parse / Dump
 // FlameCyclone
 namespace fcjson
 {
@@ -63,56 +63,56 @@ namespace fcjson
     using json_object = std::map<_tstring, json_value>;
     using json_array = std::vector<json_value>;
 
-    // 异常
+    // Exception
     class json_exception
     {
     public:
         json_exception(const _tstring& msg) :
-            m_Message(msg)
+            m_msg(msg)
         {
         }
 
         _tstring get_message() const
         {
-            return m_Message;
+            return m_msg;
         }
 
         _tstring get_text_pos() const
         {
-            return m_Message;
+            return m_msg;
         }
 
     private:
-        _tstring    m_Message;      // 提示
+        _tstring    m_msg;      // Message
     };
 
-    // JSON 数据类型
+    // JSON Data type
     enum json_type
     {
-        json_type_null,              // 空值       null
-        json_type_string,            // 字符串     "FlameCyclone"
-        json_type_int,               // 有符号整数 正数: 0 - 9223372036854775807 负数: -1 - (9223372036854775807 - 1)
-        json_type_uint,              // 无符号整数 0 - 18446744073709551615
-        json_type_float,             // 浮点数     3.141592653589793
-        json_type_bool,              // 布尔       true 或 false
-        json_type_object,            // 对象       [128,256,512,1204,"string",{"name":"FlameCyclone"}]
-        json_type_array,             // 数组       {"name":"FlameCyclone"}
+        json_type_null,              // null
+        json_type_string,            // "FlameCyclone"
+        json_type_int,               // 0 - 9223372036854775807 Or -1 - (9223372036854775807 - 1)
+        json_type_uint,              // 0 - 18446744073709551615
+        json_type_float,             // 3.141592653589793
+        json_type_bool,              // true Or false
+        json_type_object,            // [128,256,512,1204,"string",{"name":"FlameCyclone"}]
+        json_type_array,             // {"name":"FlameCyclone"}
     };
 
-    // JSON 编码
+    // JSON Character Encoding
     enum json_encoding
     {
-        json_encoding_auto,              // 自动
+        json_encoding_auto,              // Auto
         json_encoding_utf8,              // Utf8
-        json_encoding_utf16,             // Utf16编码
+        json_encoding_utf16,             // Utf16
     };
 
-    // JSON 值类
+    // JSON value class
     class json_value
     {
     public:
 
-        // 构造
+        // Constructor
         json_value();
         json_value(json_type type);
         json_value(nullptr_t);
@@ -132,7 +132,7 @@ namespace fcjson
         json_value(json_object&& val);
         json_value(json_array&& val);
 
-        // 运算符重载
+        // Operator Overloading
         json_value& operator = (nullptr_t);
         json_value& operator = (json_type type);
         json_value& operator = (json_bool val);
@@ -151,20 +151,13 @@ namespace fcjson
         json_value& operator = (json_array&& val);
         json_value& operator = (json_value&& r) noexcept;
 
-        // 下标重载, 访问不存在的索引会创建新的子项
+        // [] Overloading, Accessing a non-existent index will create a new sub-item
         json_value& operator [] (const _tstring& val_name) noexcept;
         json_value& operator [] (size_t index) noexcept;
 
-        // 清空
-        void clear();
-
         ~json_value();
 
-        // 检查与类型判断
-        json_type type() const;
-        _tstring type_name() const;
-
-        // 类型判断
+        // Type checking
         bool is_null() const;
         bool is_bool() const;
         bool is_int() const;
@@ -173,7 +166,7 @@ namespace fcjson
         bool is_object() const;
         bool is_array() const;
 
-        // 获取数据
+        // Get data
         json_bool as_bool() const;
         json_int as_int() const;
         json_uint as_uint() const;
@@ -182,58 +175,28 @@ namespace fcjson
         json_object& as_object() const;
         json_array& as_array() const;
 
-        // 
-        // @brief: 移除对象子项
-        // @param: name                 子项名
-        // @ret: bool                   移除结果
-        bool remove(const _tstring& name);
-
-        // 
-        // @brief: 移除数组子项
-        // @param: index                数组索引
-        // @ret: bool                   移除结果
-        bool remove(const size_t index);
-
-        // 
-        // @brief: 获取本身或子项计数
-        // @param: name                 子项(空字符串: 本身对象或数组的计数 非空: 对象子项的计数)
-        // @ret: size_t                 计数, 非数组或对象时返回1, 不存在返回0
-        size_t count(const _tstring& name = _T("")) const;
-
-        // 
-        // @brief: 从文本解析(仅支持 UTF8 或 UTF16编码的文本)
-        // @param: text                 文本内容
-        // @ret: bool                   操作结果
+        // Parse
         bool parse(const _tstring& text);
-
-        // 
-        // @brief: 从文件解析(仅支持 UTF8 或 UTF16编码的文件)
-        // @param: file_path            文件路径
-        // @ret: bool                   操作结果
         bool parse_from_file(const _tstring& file_path);
 
-        // 
-        // @brief: 转储为文本
-        // @param: indent               缩进空格数量
-        // @param: flag_escape          是否转义非Ascii字符
-        // @ret: std::wstring           转储文本
+        // Dump
         _tstring dump(int indent = 0, bool flag_escape = false) const;
-
-        // 
-        // @brief: 转储到文件
-        // @param: file_path            文件路径
-        // @param: indent               缩进空格数量
-        // @param: flag_escape          是否转义非Ascii字符
-        // @param: enc                  Unicode编码类型(UTF8或UTF16)
-        // @ret: std::wstring           转储文本
         bool dump_to_file(const _tstring& file_path, int indent = 0, bool flag_escape = false, json_encoding enc = json_encoding::json_encoding_auto);
+
+        // Others
+        bool remove(const _tstring& name);
+        bool remove(const size_t index);
+        size_t count(const _tstring& name = _T("")) const;
+        json_type type() const;
+        _tstring type_name() const;
+        void clear();
 
     private:
 
-        // 重置类型
+        // Reset type
         inline void _reset_type(json_type type);
 
-        // 解析
+        // Parse
         bool _parse_number(const _tchar* data_ptr, json_value& val, const _tchar** pEnd);
         bool _parse_unicode(const _tchar* data_ptr, _tstring& val, const _tchar** pEnd);
         bool _parse_string(const _tchar* data_ptr, _tstring& val, const _tchar** pEnd);
@@ -242,7 +205,7 @@ namespace fcjson
         bool _parse_value(const _tchar* data_ptr, json_value& val, const _tchar** pEnd);
         bool _parse(const _tchar* data_ptr, json_value& val, const _tchar** pEnd);
 
-        // 转储
+        // Dump
         void _dump_int(_tstring& append_buf, int64_t val) const;
         void _dump_uint(_tstring& append_buf, uint64_t val) const;
         void _dump_float(_tstring& append_buf, double val) const;
@@ -253,18 +216,18 @@ namespace fcjson
 
     private:
 
-        // JSON 数据
+        // JSON data
         union json_data
         {
-            json_bool    _bool;             // 布尔类型          bool
-            json_int     _int;              // 有符号整数        int64_t
-            json_uint    _uint;             // 无符号整数        uint64_t
-            json_float   _float;            // 浮点数            double
-            json_string* _string_ptr;       // 字符串指针        std::string
-            json_object* _object_ptr;       // 对象类型指针      std::map
-            json_array*  _array_ptr;        // 数组类型指针      std::vector
-        }m_data;                            // 数据
+            json_bool    _bool;             // bool
+            json_int     _int;              // int64_t
+            json_uint    _uint;             // uint64_t
+            json_float   _float;            // double
+            json_string* _string_ptr;       // std::string
+            json_object* _object_ptr;       // std::map
+            json_array*  _array_ptr;        // std::vector
+        }m_data;                            //
 
-        json_type    m_type;                // 类型(表示当前数据所属类型)
+        json_type    m_type;                // Data type
     };
 }
