@@ -1108,39 +1108,49 @@ namespace fcjson
         {
             _utchar ch = *data_ptr;
 
-            if (_T('\"') == ch)
+            switch (ch)
+            {
+            case _T('\"'):
             {
                 append_str += _T(R"(\")");
             }
-            else if (_T('\\') == ch)
+            break;
+            case _T('\\'):
             {
-                append_str += _T(R"(\\)");
+                append_str += _T(R"(\\")");
             }
-            else if (_T('/') == ch)
+            break;
+            case _T('/'):
             {
                 append_str += _T(R"(/)");
             }
-            else if (_T('\b') == ch)
+            break;
+            case _T('\b'):
             {
                 append_str += _T(R"(\b)");
             }
-            else if (_T('\f') == ch)
+            break;
+            case _T('\f'):
             {
                 append_str += _T(R"(\f)");
             }
-            else if (_T('\n') == ch)
+            break;
+            case _T('\n'):
             {
                 append_str += _T(R"(\n)");
             }
-            else if (_T('\r') == ch)
+            break;
+            case _T('\r'):
             {
                 append_str += _T(R"(\r)");
             }
-            else if (_T('\t') == ch)
+            break;
+            case _T('\t'):
             {
                 append_str += _T(R"(\t)");
             }
-            else
+            break;
+            default:
             {
                 if (ch < 0x80 || !flag_escape)
                 {
@@ -1151,6 +1161,8 @@ namespace fcjson
                     _get_unicode_string(append_str, data_ptr, &data_ptr);
                     continue;
                 }
+            }
+            break;
             }
 
             data_ptr++;
@@ -1268,74 +1280,79 @@ namespace fcjson
             indent = 0;
         }
 
-        do
+        switch (m_type)
         {
-            if (is_array())
+        case json_type::json_type_null:
+        {
+            append_str += _T("null");
+        }
+        break;
+        case json_type::json_type_bool:
+        {
+            append_str += m_data._bool ? _T("true") : _T("false");
+        }
+        break;
+        case json_type::json_type_int:
+        {
+            _dump_int(append_str, m_data._int);
+        }
+        break;
+        case json_type::json_type_uint:
+        {
+            _dump_uint(append_str, m_data._uint);
+        }
+        break;
+        case json_type::json_type_float:
+        {
+            _dump_float(append_str, m_data._float);
+        }
+        break;
+        case json_type::json_type_string:
+        {
+            append_str += _T("\"");
+            _dump_string(append_str, *m_data._string_ptr, flag_escape);
+            append_str += _T("\"");
+        }
+        break;
+        case json_type::json_type_object:
+        {
+            if (nullptr == m_data._array_ptr)
             {
-                if (nullptr == m_data._array_ptr)
-                {
-                    append_str += _T("[]");
-                    break;
-                }
-
-                if (m_data._array_ptr->empty())
-                {
-                    append_str += _T("[]");
-                    break;
-                }
+                append_str += _T("{}");
+                break;
             }
 
-            if (is_object())
+            if (m_data._array_ptr->empty())
             {
-                if (nullptr == m_data._object_ptr)
-                {
-                    append_str += _T("{}");
-                    break;
-                }
-
-                if (m_data._object_ptr->empty())
-                {
-                    append_str += _T("{}");
-                    break;
-                }
+                append_str += _T("{}");
+                break;
             }
 
-            if (is_null())
+            _dump_object(append_str, indent_text, depth, indent, flag_escape);
+        }
+        break;
+        case json_type::json_type_array:
+        {
+            if (nullptr == m_data._array_ptr)
             {
-                append_str += _T("null");
-            }
-            else if (is_bool())
-            {
-                append_str += m_data._bool ? _T("true") : _T("false");
-            }
-            else if (json_type::json_type_int == m_type)
-            {
-                _dump_int(append_str, m_data._int);
-            }
-            else if (json_type::json_type_uint == m_type)
-            {
-                _dump_uint(append_str, m_data._uint);
-            }
-            else if (is_float())
-            {
-                _dump_float(append_str, m_data._float);
-            }
-            else if (is_string())
-            {
-                append_str += _T("\"");
-                _dump_string(append_str, *m_data._string_ptr, flag_escape);
-                append_str += _T("\"");
-            }
-            else if (is_object())
-            {
-                _dump_object(append_str, indent_text, depth, indent, flag_escape);
-            }
-            else if (is_array())
-            {
-                _dump_array(append_str, indent_text, depth, indent, flag_escape);
+                append_str += _T("[]");
+                break;
             }
 
-        } while (false);
+            if (m_data._array_ptr->empty())
+            {
+                append_str += _T("[]");
+                break;
+            }
+
+            _dump_array(append_str, indent_text, depth, indent, flag_escape);
+        }
+        break;
+        default:
+        {
+        }
+        break;
+        }
     }
 
     _tstring json_value::dump(int indent/* = 0*/, bool flag_escape/* = false*/) const
@@ -1641,61 +1658,90 @@ namespace fcjson
     {
         data_ptr = _skip_whitespace(data_ptr);
         bool result_flag = false;
+        bool abort_flag = false;
 
         do
         {
             _tchar ch = *data_ptr;
-            if (_T('{') == ch)
+
+            switch (ch)
+            {
+            case _T('{'):
             {
                 if (!_parse_object(data_ptr, val, &data_ptr))
                 {
+                    abort_flag = true;
                     break;
                 }
             }
-            else if (_T('[') == ch)
+            break;
+            case _T('['):
             {
                 if (!_parse_array(data_ptr, val, &data_ptr))
                 {
+                    abort_flag = true;
                     break;
                 }
             }
-            else if (_T('\"') == ch)
+            break;
+            case _T('\"'):
             {
                 _tstring str_value;
                 if (!_parse_string(data_ptr, str_value, &data_ptr))
                 {
+                    abort_flag = true;
                     break;
                 }
                 val = std::move(str_value);
             }
-            else if (0 == _tcsncmp(_T("null"), data_ptr, 4))
-            {
-                val = json_value(json_type::json_type_null);
-                data_ptr += 4;
-            }
-            else if (0 == _tcsncmp(_T("true"), data_ptr, 4))
-            {
-                val = true;
-                data_ptr += 4;
-            }
-            else if (0 == _tcsncmp(_T("false"), data_ptr, 5))
-            {
-                val = false;
-                data_ptr += 5;
-            }
-            else if (_T('-') == ch || _istdigit(ch))
+            break;
+            case _T('-'):
             {
                 if (!_parse_number(data_ptr, val, &data_ptr))
                 {
+                    abort_flag = true;
                     break;
                 }
             }
-            else
+            break;
+            default:
             {
-                break;
+                if (0 == _tcsncmp(_T("null"), data_ptr, 4))
+                {
+                    val = json_value(json_type::json_type_null);
+                    data_ptr += 4;
+                }
+                else if (0 == _tcsncmp(_T("true"), data_ptr, 4))
+                {
+                    val = true;
+                    data_ptr += 4;
+                }
+                else if (0 == _tcsncmp(_T("false"), data_ptr, 5))
+                {
+                    val = false;
+                    data_ptr += 5;
+                }
+                else if (_istdigit(ch))
+                {
+                    if (!_parse_number(data_ptr, val, &data_ptr))
+                    {
+                        abort_flag = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    abort_flag = true;
+                    break;
+                }
+            }
+            break;
             }
 
-            result_flag = true;
+            if (!abort_flag)
+            {
+                result_flag = true;
+            }
 
         } while (false);
 
