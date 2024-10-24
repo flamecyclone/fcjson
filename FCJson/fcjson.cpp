@@ -1341,10 +1341,9 @@ namespace fcjson
     _tstring json_value::dump(int indent/* = 0*/, bool flag_escape/* = false*/) const
     {
         _tstring result_text;
-        result_text.reserve(2850256 + 4);
         std::vector<_tstring> indent_text({_T("")});
         _dump(result_text, indent_text, 0, indent, flag_escape);
-        return std::move(result_text);
+        return result_text;
     }
 
     bool json_value::dump_to_file(const _tstring& strPath, int indent/* = 0*/, bool flag_escape/* = false*/, json_encoding encoding/* = json_encoding::json_encoding_auto*/)
