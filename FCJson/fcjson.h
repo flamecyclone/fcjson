@@ -203,14 +203,14 @@ namespace fcjson
         // 
         // @brief: 从文本解析(仅支持 UTF8 或 UTF16编码的文本)
         // @param: text                 文本内容
-        // @ret: json_value             JSON值
-        json_value parse(const _tstring& text);
+        // @ret: bool                   操作结果
+        bool parse(const _tstring& text);
 
         // 
         // @brief: 从文件解析(仅支持 UTF8 或 UTF16编码的文件)
         // @param: file_path            文件路径
-        // @ret: json_value             JSON值
-        json_value parse_from_file(const _tstring& file_path);
+        // @ret: bool                   操作结果
+        bool parse_from_file(const _tstring& file_path);
 
         // 
         // @brief: 转储为文本

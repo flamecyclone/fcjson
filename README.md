@@ -275,29 +275,28 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
 
   ```c++
 fcjson
-fcjson parse cost time: 498
-fcjson dump cost time: 189
-fcjson size: 14150865
+fcjson parse cost time: 856
+fcjson dump cost time: 358
+fcjson size: 2850256
 
 rapidjson
-rapidjson parse cost time: 102
-rapidjson dump cost time: 154
-rapidjson size: 14150865
+rapidjson parse cost time: 304
+rapidjson dump cost time: 158
+rapidjson size: 2850256
 
 nlohmann
-nlohmann parse cost time: 316
-nlohmann dump cost time: 165
-nlohmann size: 14150865
+nlohmann parse cost time: 1284
+nlohmann dump cost time: 299
+nlohmann size: 2850256
 
 jsonxx
-jsonxx parse cost time: 1381
-jsonxx dump cost time: 2027
+jsonxx parse cost time: 4511
+jsonxx dump cost time: 6197
 jsonxx size: 15973857
 
 nomango
-nomango parse cost time: 2124
-nomango dump cost time: 1227
+nomango parse cost time: 7674
+nomango dump cost time: 4479
 nomango size: 2850256
   ```
-
 

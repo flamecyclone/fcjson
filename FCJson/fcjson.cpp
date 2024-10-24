@@ -59,6 +59,40 @@ namespace fcjson
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr);
     inline const _tchar* _skip_bom(const _tchar* data_ptr);
     static bool _skip_digit(const _tchar* data_ptr, const _tchar** end_ptr);
+    
+    inline const _tchar* _skip_whitespace(const _tchar* data_ptr)
+    {
+        while (_T('\0') != *data_ptr)
+        {
+            if (*data_ptr > _T(' '))
+            {
+                break;
+            }
+
+            data_ptr++;
+        }
+
+        return data_ptr;
+    }
+
+    inline const _tchar* _skip_bom(const _tchar* data_ptr)
+    {
+#ifdef _UNICODE
+
+        while (0xFEFF == *data_ptr)
+        {
+            data_ptr++;
+        }
+
+#else
+        while (nullptr != _tcsstr(data_ptr, "\xEF\xBB\xBF"))
+        {
+            data_ptr += 3;
+        }
+
+#endif
+        return data_ptr;
+    }
 
     // 不存在的值, 用于下标运算符重载, 不抛出异常
     static json_value _none_value(json_type::json_type_null);
@@ -1391,14 +1425,13 @@ namespace fcjson
         return true;
     }
 
-    json_value json_value::parse(const _tstring& text)
+    bool json_value::parse(const _tstring& text)
     {
         const _tchar* end_ptr = nullptr;
-        _parse(text.c_str(), *this, &end_ptr);
-        return *this;
+        return _parse(text.c_str(), *this, &end_ptr);
     }
 
-    json_value json_value::parse_from_file(const _tstring& strPath)
+    bool json_value::parse_from_file(const _tstring& strPath)
     {
         std::string str_utf8;
         std::wstring str_utf16;
@@ -1411,7 +1444,7 @@ namespace fcjson
             std::ifstream input_file(strPath, std::ios::binary | std::ios::in);
             if (!input_file.is_open())
             {
-                return *this;
+                return false;
             }
 
             input_file.seekg(0, std::ios::end);
@@ -1463,8 +1496,7 @@ namespace fcjson
         } while (false);
 
         const _tchar* end_ptr = nullptr;
-        _parse(read_text.c_str(), *this, &end_ptr);
-        return *this;
+        return _parse(read_text.c_str(), *this, &end_ptr);
     }
 
     bool _skip_digit(const _tchar* data_ptr, const _tchar** end_ptr)
@@ -1486,7 +1518,6 @@ namespace fcjson
 
     bool json_value::_parse_object(const _tchar* data_ptr, json_value& val, const _tchar** end_ptr)
     {
-        json_value result_val(json_type::json_type_object);
         bool result_flag = false;
 
         if (_T('{') == *data_ptr)
@@ -1494,11 +1525,10 @@ namespace fcjson
             data_ptr++;
         }
 
+        val._reset_type(json_type::json_type_object);
+        _tstring value_name;
         while (_T('\0') != *data_ptr)
         {
-            _tstring value_name;
-            json_value value_data;
-
             data_ptr = _skip_whitespace(data_ptr);
             if (_T('}') == *data_ptr)
             {
@@ -1507,6 +1537,7 @@ namespace fcjson
                 break;
             }
 
+            value_name.clear();
             if (!_parse_string(data_ptr, value_name, &data_ptr))
             {
                 break;
@@ -1519,27 +1550,21 @@ namespace fcjson
             }
             data_ptr++;
 
+            json_value value_data;
             if (!_parse_value(data_ptr, value_data, &data_ptr))
             {
                 break;
             }
 
-#if 0
-
-            result_val[value_name] = std::move(value_data);
-#else
-
-            if (nullptr == result_val.m_data._object_ptr)
+            if (nullptr == val.m_data._object_ptr)
             {
-                result_val.m_data._object_ptr = new (std::nothrow) json_object;
+                val.m_data._object_ptr = new (std::nothrow) json_object;
             }
 
-            if (result_val.m_data._object_ptr)
+            if (val.m_data._object_ptr)
             {
-                result_val.m_data._object_ptr->insert(std::make_pair(value_name, std::move(value_data)));
+                val.m_data._object_ptr->emplace(value_name, std::move(value_data));
             }
-
-#endif
 
             data_ptr = _skip_whitespace(data_ptr);
             if (_T(',') == *data_ptr)
@@ -1558,11 +1583,6 @@ namespace fcjson
             }
         }
 
-        if (result_flag)
-        {
-            val = std::move(result_val);
-        }
-
         if (end_ptr)
         {
             *end_ptr = data_ptr;
@@ -1573,7 +1593,6 @@ namespace fcjson
 
     bool json_value::_parse_array(const _tchar* data_ptr, json_value& val, const _tchar** end_ptr)
     {
-        json_value result_val(json_type::json_type_array);
         bool result_flag = false;
 
         if (_T('[') == *data_ptr)
@@ -1581,7 +1600,7 @@ namespace fcjson
             data_ptr++;
         }
 
-        size_t nIndex = 0;
+        val._reset_type(json_type::json_type_array);
         while (_T('\0') != *data_ptr)
         {
             data_ptr = _skip_whitespace(data_ptr);
@@ -1598,14 +1617,14 @@ namespace fcjson
                 break;
             }
 
-            if (nullptr == result_val.m_data._array_ptr)
+            if (nullptr == val.m_data._array_ptr)
             {
-                result_val.m_data._array_ptr = new (std::nothrow) json_array;
+                val.m_data._array_ptr = new (std::nothrow) json_array;
             }
 
-            if (result_val.m_data._array_ptr)
+            if (val.m_data._array_ptr)
             {
-                result_val.m_data._array_ptr->emplace_back(std::move(value_data));
+                val.m_data._array_ptr->emplace_back(std::move(value_data));
             }
 
             data_ptr = _skip_whitespace(data_ptr);
@@ -1623,13 +1642,6 @@ namespace fcjson
             {
                 break;
             }
-
-            nIndex++;
-        }
-
-        if (result_flag)
-        {
-            val = std::move(result_val);
         }
 
         if (end_ptr)
@@ -1714,14 +1726,21 @@ namespace fcjson
     {
         bool result_flag = false;
         data_ptr = _skip_bom(data_ptr);
-        _parse_value(data_ptr, val, &data_ptr);
-        if (_T('\0') != *data_ptr)
+        if (_parse_value(data_ptr, val, &data_ptr))
         {
-            val = json_type::json_type_null;
+            if (_T('\0') != *data_ptr)
+            {
+                val = json_type::json_type_null;
+            }
+            else
+            {
+                result_flag = true;
+            }
         }
-        else
+
+        if (!result_flag)
         {
-            result_flag = true;
+            val.clear();
         }
 
         if (end_ptr)
@@ -1730,40 +1749,6 @@ namespace fcjson
         }
 
         return result_flag;
-    }
-
-    inline const _tchar* _skip_whitespace(const _tchar* data_ptr)
-    {
-        while (_T('\0') != *data_ptr)
-        {
-            if (*data_ptr > _T(' '))
-            {
-                break;
-            }
-
-            data_ptr++;
-        }
-
-        return data_ptr;
-    }
-
-    inline const _tchar* _skip_bom(const _tchar* data_ptr)
-    {
-#ifdef _UNICODE
-
-        while (0xFEFF == *data_ptr)
-        {
-            data_ptr++;
-        }
-
-#else
-        while (nullptr != _tcsstr(data_ptr, "\xEF\xBB\xBF"))
-        {
-            data_ptr += 3;
-        }
-
-#endif
-        return data_ptr;
     }
 
     bool _get_utf16_code_point(const _tchar* data_ptr, uint32_t* code_point_ptr, const _tchar** end_ptr)
