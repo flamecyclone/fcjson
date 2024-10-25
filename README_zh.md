@@ -2,17 +2,22 @@
 
 [英文](README.md) | [中文](README_zh.md)
 
-## Introduction
-JSON for C++
+## 介绍
+自己实现的极简的json解析库
 
-## Software Architecture
+## 软件架构
+Windows
 C++11
 
-## Installation Guide
+## 安装教程
 
-Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
+将 fcjson.h 和 fcjson.cpp 添加到你得项目中引用即可
 
-## Usage Instructions
+## 使用说明
+
+- ### 引用
+
+- ### 构造
 
   ```c++
   fcjson::json_value val = fcjson::json_object{
@@ -38,7 +43,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
 
   
 
-- ### Parse string/dump string
+- ### 解析字符串/转储字符串
 
   ```c++
   fcjson::json_value val;
@@ -47,7 +52,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   std::string strJson = val.dump(4, true);
   std::cout << strJson << std::endl;
   
-  // Accessing an array
+  // 访问数组
   val["array"] = fcjson::json_type::json_type_array;
   auto& array = val["array"];
   for (int i = 0; i < 5; i++)
@@ -55,10 +60,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
       array[i] = i;
   }
   
-  // Delete array element
+  // 删除数组元素
   array.remove(4);
   
-  // Access array element
+  // 访问对象
   val["object"] = fcjson::json_type::json_type_object;
   auto& object = val["object"];
   for (int i = 0; i < 5; i++)
@@ -66,10 +71,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
       object[std::to_string(i)] = i;
   }
   
-  // Delete object element
+  // 删除对象元素
   object.remove("1");
   
-  // Assignment
+  //赋值
   val["hobby"] = "C++";
   val.remove("object");
   val["hobby"] = nullptr;
@@ -79,7 +84,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
 
   
 
-- ### Parse/Dump
+- ### 解析文件/转储文件
 
   ```c++
   fcjson::json_value val;
@@ -89,7 +94,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
 
   
 
-- ### Example
+- ### 例子
 
   ```c++
   #include <iostream>
@@ -113,8 +118,8 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   {
       setlocale(LC_ALL, "en_US.UTF-8");
   
-      // Construct a JSON object
-      std::cout << "Construct a JSON object" << std::endl;
+      // 构造 JSON 对象
+      std::cout << "构造 JSON 对象" << std::endl;
       {
           fcjson::json_value val = fcjson::json_object{
               { "null", nullptr},
@@ -136,16 +141,16 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
               }
           };
   
-          // Serialize (without escaping UNICODE characters)
+          // 序列化(不转义UNICODE字符)
           std::cout << val.dump(4, false) << std::endl;
   
-          // Serialization (with escaping UNICODE characters)
+          // 序列化(转义UNICODE字符)
           std::cout << val.dump(4, true) << std::endl;
       }
   
-      // Assignment Operation
+      // 赋值操作
       std::cout << std::endl;
-      std::cout << "Assignment Operation" << std::endl;
+      std::cout << "赋值操作" << std::endl;
       {
           fcjson::json_value val;
           val = fcjson::json_array{ 1,2,3,4,5,6,7,8,9,0 };
@@ -159,9 +164,9 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           std::cout << val.dump(4, false) << std::endl;
       }
   
-      // Parse String / Dump String
+      // 解析字符串/转储字符串
       std::cout << std::endl;
-      std::cout << "Parse String / Dump String" << std::endl;
+      std::cout << "解析字符串/转储字符串" << std::endl;
       {
           fcjson::json_value val;
   
@@ -169,7 +174,7 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           std::string strJson = val.dump(4, true);
           std::cout << strJson << std::endl;
   
-          // Access Array
+          // 访问数组
           val["array"] = fcjson::json_type::json_type_array;
           auto& array = val["array"];
           for (int i = 0; i < 5; i++)
@@ -177,10 +182,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
               array[i] = i;
           }
   
-          // Delete Array Element
+          // 删除数组元素
           array.remove(4);
   
-          // Access Object
+          // 访问对象
           val["object"] = fcjson::json_type::json_type_object;
           auto& object = val["object"];
           for (int i = 0; i < 5; i++)
@@ -188,10 +193,10 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
               object[std::to_string(i)] = i;
           }
   
-          // Delete Object Element
+          // 删除对象元素
           object.remove("1");
   
-          // Assignment
+          //赋值
           val["hobby"] = "C++";
           val.remove("object");
           val["hobby"] = nullptr;
@@ -199,9 +204,9 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
           std::cout << val.dump(4, true) << std::endl;
       }
   
-      // Parse File / Dump File
+      // 解析文件/转储文件
       std::cout << std::endl;
-      std::cout << "Parse File / Dump File" << std::endl;
+      std::cout << "解析文件/转储文件" << std::endl;
       {
           fcjson::json_value val;
           val.parse_from_file("data.json");
@@ -222,13 +227,13 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
       inputFile.read((char*)&strBuffer[0], nSize);
       inputFile.close();
   
-      // Performance Testing
+      // 性能测试
       size_t nCount = count;
       clock_t timeBegin = clock();
       clock_t timeEnd = clock();
   
       std::cout << std::endl;
-      std::cout << "Performance Testing" << std::endl;
+      std::cout << "性能测试" << std::endl;
       while (true)
       {
           {
@@ -271,29 +276,30 @@ Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
   
   ```
   
-- ### Performance
+- ### 性能
 
-Parse file:  [city_4.json](Bin/city_4.json)
+  解析文件 [city_4.json](Bin/city_4.json)
 
   ```c++
-fcjson
-parse: 65 ms Mem: 27.0312 MB
-dump: 30 ms Mem: 4.76562 MB Dump size: 2850256 Bytes
+  fcjson
+  parse: 65 ms Mem: 27.0312 MB
+  dump: 30 ms Mem: 4.76562 MB Dump size: 2850256 Bytes
+  
+  rapidjson
+  parse: 30 ms Mem: 6.57031 MB
+  dump: 18 ms Mem: 8.54297 MB Dump size: 2850256 Bytes
+  
+  nlohmann
+  parse: 95 ms Mem: 27.9883 MB
+  dump: 31 ms Mem: 33.0664 MB Dump size: 2850256 Bytes
+  
+  jsonxx
+  parse: 411 ms Mem: 32.2344 MB
+  dump: 616 ms Mem: 20.0312 MB Dump size: 15973857 Bytes
+  
+  nomango
+  parse: 751 ms Mem: 41.8047 MB
+  dump: 454 ms Mem: 5.50391 MB Dump size: 2850256 Bytes
 
-rapidjson
-parse: 30 ms Mem: 6.57031 MB
-dump: 18 ms Mem: 8.54297 MB Dump size: 2850256 Bytes
 
-nlohmann
-parse: 95 ms Mem: 27.9883 MB
-dump: 31 ms Mem: 33.0664 MB Dump size: 2850256 Bytes
-
-jsonxx
-parse: 411 ms Mem: 32.2344 MB
-dump: 616 ms Mem: 20.0312 MB Dump size: 15973857 Bytes
-
-nomango
-parse: 751 ms Mem: 41.8047 MB
-dump: 454 ms Mem: 5.50391 MB Dump size: 2850256 Bytes
-  ```
 
