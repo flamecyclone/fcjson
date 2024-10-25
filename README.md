@@ -10,7 +10,7 @@ C++11
 
 ## Installation Guide
 
-Add fcjson.h and fcjson.cpp to your project and reference them accordingly.
+Add fcjson.h and fcjson.cpp to your project and include them as references.
 
 ## Usage Instructions
 

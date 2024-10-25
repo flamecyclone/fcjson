@@ -11,7 +11,7 @@ C++11
 
 ## 安装教程
 
-将 fcjson.h 和 fcjson.cpp 添加到你得项目中引用即可
+将 fcjson.h 和 fcjson.cpp 添加到你的项目中引用即可
 
 ## 使用说明
 
