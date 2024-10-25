@@ -237,12 +237,6 @@ namespace fcjson
         r.m_type = json_type::json_type_null;
     }
 
-    json_value& json_value::_get_none() const
-    {
-        static json_value none(json_type::json_type_null);
-        return none;
-    }
-
     inline void json_value::_reset_type(json_type type)
     {
         if (this == &_get_none())
@@ -816,6 +810,152 @@ namespace fcjson
         return it_find->second.count();
     }
 
+    bool json_value::parse(const _tstring& text)
+    {
+        clear();
+        const _tchar* end_ptr = nullptr;
+        return _parse(text.c_str(), *this, &end_ptr);
+    }
+
+    bool json_value::parse_from_file(const _tstring& strPath)
+    {
+
+        std::string str_utf8;
+        std::wstring str_utf16;
+        _tstring read_text;
+
+        clear();
+        do
+        {
+            std::ifstream input_file(strPath, std::ios::binary | std::ios::in);
+            if (!input_file.is_open())
+            {
+                return false;
+            }
+
+            input_file.seekg(0, std::ios::end);
+            std::streamoff text_size = input_file.tellg();
+            input_file.seekg(0, std::ios::beg);
+
+            std::string text_buffer(text_size, 0);
+            input_file.read((char*)&text_buffer[0], text_size);
+            size_t byte_count = (size_t)input_file.gcount();
+            input_file.close();
+
+            if (0 == byte_count)
+            {
+                break;
+            }
+
+            int32_t utf8_length = _utf8_to_utf16(text_buffer.data(), text_buffer.size(), &str_utf8, &str_utf16);
+
+#ifdef _UNICODE
+            if (utf8_length > 0)
+            {
+                read_text = str_utf16;
+                break;
+            }
+#else
+            if (utf8_length > 0)
+            {
+                read_text = str_utf8;
+                break;
+            }
+#endif
+
+            int32_t utf16_length = _utf16_to_utf8(text_buffer.data(), text_buffer.size(), &str_utf8, &str_utf16);
+
+#ifdef _UNICODE
+            if (utf16_length > 0)
+            {
+                read_text = str_utf16;
+                break;
+            }
+#else
+            if (utf16_length > 0)
+            {
+                read_text = str_utf8;
+                break;
+            }
+#endif
+
+        } while (false);
+
+        const _tchar* end_ptr = nullptr;
+        return _parse(read_text.c_str(), *this, &end_ptr);
+    }
+
+    _tstring json_value::dump(int indent/* = 0*/, bool flag_escape/* = false*/) const
+    {
+        _tstring result_text;
+        std::vector<_tstring> indent_text({_T("")});
+        _dump(result_text, indent_text, 0, indent, flag_escape);
+        return result_text;
+    }
+
+    bool json_value::dump_to_file(const _tstring& strPath, int indent/* = 0*/, bool flag_escape/* = false*/, json_encoding encoding/* = json_encoding::json_encoding_auto*/)
+    {
+        _tstring dump_text;
+        std::vector<_tstring> indent_text({_T("")});
+        _dump(dump_text, indent_text, 0, indent, flag_escape);
+
+        std::string str_utf8;
+        std::wstring str_utf16;
+        _tstring result_text;
+
+        str_utf16.push_back((uint16_t)0xFEFF);
+
+        std::ofstream output_file(strPath, std::ios::binary | std::ios::out);
+        if (!output_file.is_open())
+        {
+            return false;
+        }
+
+#ifdef _UNICODE
+        result_text = str_utf16;
+
+        if (json_encoding::json_encoding_utf16 == encoding || json_encoding::json_encoding_auto == encoding)
+        {
+            result_text += dump_text;
+            output_file.write((const char*)result_text.data(), result_text.size() * sizeof(_tchar));
+            output_file.close();
+        }
+
+        if (json_encoding::json_encoding_utf8 == encoding)
+        {
+            int32_t utf8_length = _utf16_to_utf8(dump_text.c_str(), (size_t)-1, &str_utf8, nullptr);
+            if (utf8_length >= 0)
+            {
+                output_file.write((const char*)str_utf8.data(), str_utf8.size() * sizeof(char));
+                output_file.close();
+            }
+        }
+
+#else
+        result_text = str_utf8;
+
+        if (json_encoding::json_encoding_utf8 == encoding || json_encoding::json_encoding_auto == encoding)
+        {
+            result_text += dump_text;
+            output_file.write((const char*)result_text.data(), result_text.size() * sizeof(_tchar));
+            output_file.close();
+        }
+
+        if (json_encoding::json_encoding_utf16 == encoding)
+        {
+            int32_t utf8_length = _utf8_to_utf16(dump_text.c_str(), (size_t)-1, nullptr, &str_utf16);
+            if (utf8_length >= 0)
+            {
+                output_file.write((const char*)str_utf16.data(), str_utf16.size() * sizeof(wchar_t));
+                output_file.close();
+            }
+        }
+
+#endif
+
+        return true;
+    }
+
     bool json_value::_parse_number(const _tchar* data_ptr, json_value& val, const _tchar** end_ptr)
     {
         // [-]?[0-9]+\.[0-9]+[eE]?[-+]?[0-9]+
@@ -1383,150 +1523,10 @@ namespace fcjson
         }
     }
 
-    _tstring json_value::dump(int indent/* = 0*/, bool flag_escape/* = false*/) const
+    json_value& json_value::_get_none()
     {
-        _tstring result_text;
-        std::vector<_tstring> indent_text({_T("")});
-        _dump(result_text, indent_text, 0, indent, flag_escape);
-        return result_text;
-    }
-
-    bool json_value::dump_to_file(const _tstring& strPath, int indent/* = 0*/, bool flag_escape/* = false*/, json_encoding encoding/* = json_encoding::json_encoding_auto*/)
-    {
-        _tstring dump_text;
-        std::vector<_tstring> indent_text({_T("")});
-        _dump(dump_text, indent_text, 0, indent, flag_escape);
-
-        std::string str_utf8;
-        std::wstring str_utf16;
-        _tstring result_text;
-
-        str_utf16.push_back((uint16_t)0xFEFF);
-
-        std::ofstream output_file(strPath, std::ios::binary | std::ios::out);
-        if (!output_file.is_open())
-        {
-            return false;
-        }
-
-#ifdef _UNICODE
-        result_text = str_utf16;
-
-        if (json_encoding::json_encoding_utf16 == encoding || json_encoding::json_encoding_auto == encoding)
-        {
-            result_text += dump_text;
-            output_file.write((const char*)result_text.data(), result_text.size() * sizeof(_tchar));
-            output_file.close();
-        }
-
-        if (json_encoding::json_encoding_utf8 == encoding)
-        {
-            int32_t utf8_length = _utf16_to_utf8(dump_text.c_str(), (size_t)-1, &str_utf8, nullptr);
-            if (utf8_length >= 0)
-            {
-                output_file.write((const char*)str_utf8.data(), str_utf8.size() * sizeof(char));
-                output_file.close();
-            }
-        }
-
-#else
-        result_text = str_utf8;
-
-        if (json_encoding::json_encoding_utf8 == encoding || json_encoding::json_encoding_auto == encoding)
-        {
-            result_text += dump_text;
-            output_file.write((const char*)result_text.data(), result_text.size() * sizeof(_tchar));
-            output_file.close();
-        }
-
-        if (json_encoding::json_encoding_utf16 == encoding)
-        {
-            int32_t utf8_length = _utf8_to_utf16(dump_text.c_str(), (size_t)-1, nullptr, &str_utf16);
-            if (utf8_length >= 0)
-            {
-                output_file.write((const char*)str_utf16.data(), str_utf16.size() * sizeof(wchar_t));
-                output_file.close();
-            }
-        }
-
-#endif
-
-        return true;
-    }
-
-    bool json_value::parse(const _tstring& text)
-    {
-        clear();
-        const _tchar* end_ptr = nullptr;
-        return _parse(text.c_str(), *this, &end_ptr);
-    }
-
-    bool json_value::parse_from_file(const _tstring& strPath)
-    {
-
-        std::string str_utf8;
-        std::wstring str_utf16;
-        _tstring read_text;
-
-        clear();
-        do
-        {
-            std::ifstream input_file(strPath, std::ios::binary | std::ios::in);
-            if (!input_file.is_open())
-            {
-                return false;
-            }
-
-            input_file.seekg(0, std::ios::end);
-            std::streamoff text_size = input_file.tellg();
-            input_file.seekg(0, std::ios::beg);
-
-            std::string text_buffer(text_size, 0);
-            input_file.read((char*)&text_buffer[0], text_size);
-            size_t byte_count = (size_t)input_file.gcount();
-            input_file.close();
-
-            if (0 == byte_count)
-            {
-                break;
-            }
-
-            int32_t utf8_length = _utf8_to_utf16(text_buffer.data(), text_buffer.size(), &str_utf8, &str_utf16);
-
-#ifdef _UNICODE
-            if (utf8_length > 0)
-            {
-                read_text = str_utf16;
-                break;
-            }
-#else
-            if (utf8_length > 0)
-            {
-                read_text = str_utf8;
-                break;
-            }
-#endif
-
-            int32_t utf16_length = _utf16_to_utf8(text_buffer.data(), text_buffer.size(), &str_utf8, &str_utf16);
-
-#ifdef _UNICODE
-            if (utf16_length > 0)
-            {
-                read_text = str_utf16;
-                break;
-            }
-#else
-            if (utf16_length > 0)
-            {
-                read_text = str_utf8;
-                break;
-            }
-#endif
-
-        } while (false);
-
-        const _tchar* end_ptr = nullptr;
-        return _parse(read_text.c_str(), *this, &end_ptr);
+        static json_value val(json_type::json_type_null);
+        return val;
     }
 
     bool _skip_digit(const _tchar* data_ptr, const _tchar** end_ptr)

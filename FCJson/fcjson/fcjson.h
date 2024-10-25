@@ -194,7 +194,7 @@ namespace fcjson
 
     private:
 
-        json_value& _get_none() const;
+        static json_value& _get_none();
 
         // Reset type
         inline void _reset_type(json_type type);
@@ -216,6 +216,7 @@ namespace fcjson
         void _dump_object(_tstring& append_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const;
         void _dump_array(_tstring& append_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const;
         void _dump(_tstring& append_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const;
+
 
     private:
 

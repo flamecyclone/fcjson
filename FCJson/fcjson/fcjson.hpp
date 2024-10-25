@@ -1005,10 +1005,10 @@ namespace fcjson
         }
 
     private:
-        json_value& _get_none() const
+
+        static json_value& _get_none()
         {
             static json_value val(json_type::json_type_null);
-
             return val;
         }
 

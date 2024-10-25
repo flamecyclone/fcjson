@@ -2,7 +2,7 @@
 #include <locale>
 #include <string>
 #include <fstream>
-#include "fcjson/fcjson.hpp"
+#include "fcjson/fcjson.h"
 
 #pragma execution_character_set("utf-8")
 

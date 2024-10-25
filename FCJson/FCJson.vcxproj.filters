@@ -21,9 +21,12 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="fcjson\fcjson.cpp">
+      <Filter>fcjson</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fcjson\fcjson.hpp">
+    <ClInclude Include="fcjson\fcjson.h">
       <Filter>fcjson</Filter>
     </ClInclude>
   </ItemGroup>
