@@ -1,6 +1,6 @@
 # fcjson
 
-[英文](README.md) | [中文](README_zh.md)
+[English](README_en.md) | [中文](README_zh.md)
 
 ## Introduction
 JSON for C++
