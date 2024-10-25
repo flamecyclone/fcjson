@@ -3,7 +3,7 @@
 [English](README_en.md) | [中文](README_zh.md)
 
 ## 介绍
-自己实现的极简的json解析库
+一个适用于 C++ 的微型 JSON解析/转储库
 
 ## 软件架构
 Windows

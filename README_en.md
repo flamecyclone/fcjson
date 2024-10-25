@@ -3,7 +3,7 @@
 [English](README_en.md) | [中文](README_zh.md)
 
 ## Introduction
-JSON for C++
+A Tiny JSON Parse/Dump for C++
 
 ## Software Architecture
 C++11
