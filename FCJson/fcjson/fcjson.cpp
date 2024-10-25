@@ -53,7 +53,7 @@ namespace fcjson
 
 #endif
 
-    static std::string _get_utf8_text_for_code_point(uint32_t cp32);
+    static size_t _get_utf8_text_for_code_point(uint32_t cp32, char* out_buf);
     static bool _get_utf16_code_point(const _tchar* data_ptr, uint32_t* code_point_ptr, const _tchar** end_ptr);
     static bool _get_unicode_string(_tstring& append_str, const _tchar* data_ptr, const _tchar** end_ptr);
     static int32_t _utf8_to_utf16(const void* data_ptr, size_t size = -1, std::string* text_utf8_ptr = nullptr, std::wstring* text_utf16_ptr = nullptr);
@@ -61,7 +61,7 @@ namespace fcjson
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr);
     inline const _tchar* _skip_bom(const _tchar* data_ptr);
     static bool _skip_digit(const _tchar* data_ptr, const _tchar** end_ptr);
-    
+
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr)
     {
         while (_T('\0') != *data_ptr)
@@ -1047,6 +1047,7 @@ namespace fcjson
 
     bool json_value::_parse_unicode(const _tchar* data_ptr, _tstring& val, const _tchar** end_ptr)
     {
+        char sz_buf[32] = { 0 };
         uint32_t cp32 = 0;
         bool result_flag = false;
 
@@ -1088,7 +1089,7 @@ namespace fcjson
                     val.push_back(cp32_high);
                     val.push_back(cp32_low);
 #else
-                    val += _get_utf8_text_for_code_point(cp32);
+                    val.append(sz_buf, _get_utf8_text_for_code_point(cp32, sz_buf));
 #endif
                 }
                 else
@@ -1101,7 +1102,7 @@ namespace fcjson
 #ifdef _UNICODE
                 val.push_back((_tchar)cp32);
 #else
-                val += _get_utf8_text_for_code_point(cp32);
+                val.append(sz_buf, _get_utf8_text_for_code_point(cp32, sz_buf));
 #endif
             }
 
@@ -1315,7 +1316,7 @@ namespace fcjson
             }
             case _T('\\'):
             {
-                append_str += _T(R"(\\")");
+                append_str += _T(R"(\\)");
             }
             break;
             default:
@@ -1935,72 +1936,79 @@ namespace fcjson
         return false;
     }
 
-    std::string _get_utf8_text_for_code_point(uint32_t cp32)
+    size_t _get_utf8_text_for_code_point(uint32_t cp32, char* out_buf)
     {
-        char text_buffer[16] = { 0 };
+        size_t length = 0;
 
         // 1byte 0xxxxxxx
         if (cp32 >= 0x00000000 && cp32 <= 0x0000007F)
         {
-            text_buffer[0] = (uint8_t)cp32;
-            text_buffer[1] = 0;
+            out_buf[0] = (uint8_t)cp32;
+            out_buf[1] = 0;
+            length = 1;
         }
 
         // 2bytes 110xxxxx 10xxxxxx
-        if (cp32 >= 0x00000080 && cp32 <= 0x000007FF)
+        else if (cp32 >= 0x00000080 && cp32 <= 0x000007FF)
         {
-            text_buffer[0] = ((cp32 >>  6) & 0x1F) | 0xC0;
-            text_buffer[1] = ((cp32 & 0x3F)) | 0x80;
-            text_buffer[2] = 0;
+            out_buf[0] = ((cp32 >>  6) & 0x1F) | 0xC0;
+            out_buf[1] = ((cp32 & 0x3F)) | 0x80;
+            out_buf[2] = 0;
+            length = 2;
         }
 
         // 3bytes 1110xxxx 10xxxxxx 10xxxxxx
-        if (cp32 >= 0x00000800 && cp32 <= 0x0000FFFF)
+        else if (cp32 >= 0x00000800 && cp32 <= 0x0000FFFF)
         {
-            text_buffer[0] = ((cp32 >> 12) & 0x0F) | 0xE0;
-            text_buffer[1] = ((cp32 >>  6) & 0x3F) | 0x80;
-            text_buffer[2] = ((cp32 & 0x3F)) | 0x80;
-            text_buffer[3] = 0;
+            out_buf[0] = ((cp32 >> 12) & 0x0F) | 0xE0;
+            out_buf[1] = ((cp32 >>  6) & 0x3F) | 0x80;
+            out_buf[2] = ((cp32 & 0x3F)) | 0x80;
+            out_buf[3] = 0;
+            length = 3;
         }
 
         // 4bytes 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-        if (cp32 >= 0x00010000 && cp32 <= 0x001FFFFF)
+        else if (cp32 >= 0x00010000 && cp32 <= 0x001FFFFF)
         {
-            text_buffer[0] = ((cp32 >> 18) & 0x07) | 0xF0;
-            text_buffer[1] = ((cp32 >> 12) & 0x3F) | 0x80;
-            text_buffer[2] = ((cp32 >>  6) & 0x3F) | 0x80;
-            text_buffer[3] = ((cp32 & 0x3F)) | 0x80;
-            text_buffer[4] = 0;
+            out_buf[0] = ((cp32 >> 18) & 0x07) | 0xF0;
+            out_buf[1] = ((cp32 >> 12) & 0x3F) | 0x80;
+            out_buf[2] = ((cp32 >>  6) & 0x3F) | 0x80;
+            out_buf[3] = ((cp32 & 0x3F)) | 0x80;
+            out_buf[4] = 0;
+            length = 4;
         }
 
         // 5bytes 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-        if (cp32 >= 0x00200000 && cp32 <= 0x03FFFFFF)
+        else if (cp32 >= 0x00200000 && cp32 <= 0x03FFFFFF)
         {
-            text_buffer[0] = ((cp32 >> 24) & 0x03) | 0xF8;
-            text_buffer[1] = ((cp32 >> 18) & 0x3F) | 0x80;
-            text_buffer[2] = ((cp32 >> 12) & 0x3F) | 0x80;
-            text_buffer[3] = ((cp32 >>  6) & 0x3F) | 0x80;
-            text_buffer[4] = ((cp32 & 0x3F)) | 0x80;
-            text_buffer[5] = 0;
+            out_buf[0] = ((cp32 >> 24) & 0x03) | 0xF8;
+            out_buf[1] = ((cp32 >> 18) & 0x3F) | 0x80;
+            out_buf[2] = ((cp32 >> 12) & 0x3F) | 0x80;
+            out_buf[3] = ((cp32 >>  6) & 0x3F) | 0x80;
+            out_buf[4] = ((cp32 & 0x3F)) | 0x80;
+            out_buf[5] = 0;
+            length = 5;
         }
 
         // 6bytes 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-        if (cp32 >= 0x04000000 && cp32 <= 0x7FFFFFFF)
+        else if (cp32 >= 0x04000000 && cp32 <= 0x7FFFFFFF)
         {
-            text_buffer[0] = ((cp32 >> 30) & 0x01) | 0xFC;
-            text_buffer[1] = ((cp32 >> 24) & 0x3F) | 0x80;
-            text_buffer[2] = ((cp32 >> 18) & 0x3F) | 0x80;
-            text_buffer[3] = ((cp32 >> 12) & 0x3F) | 0x80;
-            text_buffer[4] = ((cp32 >>  6) & 0x3F) | 0x80;
-            text_buffer[5] = ((cp32 & 0x3F)) | 0x80;
-            text_buffer[6] = 0;
+            out_buf[0] = ((cp32 >> 30) & 0x01) | 0xFC;
+            out_buf[1] = ((cp32 >> 24) & 0x3F) | 0x80;
+            out_buf[2] = ((cp32 >> 18) & 0x3F) | 0x80;
+            out_buf[3] = ((cp32 >> 12) & 0x3F) | 0x80;
+            out_buf[4] = ((cp32 >>  6) & 0x3F) | 0x80;
+            out_buf[5] = ((cp32 & 0x3F)) | 0x80;
+            out_buf[6] = 0;
+            length = 6;
         }
 
-        return text_buffer;
+        return length;
     }
 
     int32_t _utf8_to_utf16(const void* data_ptr, size_t size/* = -1*/, std::string* text_utf8_ptr/* = nullptr*/, std::wstring* text_utf16_ptr/* = nullptr*/)
     {
+        char sz_buf[32] = { 0 };
         const uint8_t* ch_data_ptr = (const uint8_t*)data_ptr;
         std::wstring text_out_utf16;
         std::string text_out_utf8;
@@ -2125,7 +2133,7 @@ namespace fcjson
             {
                 if (text_utf8_ptr)
                 {
-                    text_out_utf8 += _get_utf8_text_for_code_point(cp32);
+                    text_out_utf8.append(sz_buf, _get_utf8_text_for_code_point(cp32, sz_buf));
                 }
 
                 if (text_utf16_ptr)
@@ -2174,6 +2182,7 @@ namespace fcjson
 
     int32_t _utf16_to_utf8(const void* data_ptr, size_t size/* = -1*/, std::string* text_utf8_ptr/* = nullptr*/, std::wstring* text_utf16_ptr/* = nullptr*/)
     {
+        char sz_buf[32] = { 0 };
         const uint16_t* ch_data_ptr = (const uint16_t*)data_ptr;
         std::wstring text_out_utf16;
         std::string text_out_utf8;
@@ -2307,7 +2316,7 @@ namespace fcjson
             {
                 if (text_utf8_ptr)
                 {
-                    text_out_utf8 += _get_utf8_text_for_code_point(cp32);
+                    text_out_utf8.append(sz_buf, _get_utf8_text_for_code_point(cp32, sz_buf));
                 }
 
                 if (text_utf16_ptr)

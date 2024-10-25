@@ -217,7 +217,6 @@ namespace fcjson
         void _dump_array(_tstring& append_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const;
         void _dump(_tstring& append_buf, std::vector<_tstring>& indent_text, int depth, int indent, bool flag_escape) const;
 
-
     private:
 
         // JSON data
