@@ -276,7 +276,7 @@ Add fcjson.h and fcjson.cpp to your project and include them as references.
 Parse file:  [city_4.json](Bin/city_4.json)
 
   ```c++
-flame_cyclone/fcjson
+FlameCyclone/fcjson
 parse: 67 ms Mem: 26.3086 MB
 dump: 30 ms Mem: 5.07812 MB Dump size: 2850256 Bytes
 
