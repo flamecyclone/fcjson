@@ -172,6 +172,7 @@ namespace fcjson
         json_int as_int() const;
         json_uint as_uint() const;
         json_float as_float() const;
+        json_float as_number() const;
         json_string& as_string() const;
         json_object& as_object() const;
         json_array& as_array() const;
@@ -233,4 +234,5 @@ namespace fcjson
 
         json_type    m_type;                // Data type
     };
+
 }

@@ -128,6 +128,7 @@ namespace fcjson
 #define _json_tcstoull          std::wcstoull
 #define _json_stprintf_s        _snwprintf
 #define _json_tisgraph          iswgraph
+#define __JSON_FUNCTION__       __FUNCTIONW__
 #else
 
 #define _json_istxdigit         std::iswxdigit
@@ -140,6 +141,7 @@ namespace fcjson
 #define _json_tcstoull          std::strtoull
 #define _json_stprintf_s        snprintf
 #define _json_tisgraph          isgraph
+#define __JSON_FUNCTION__       __FUNCTION__
 
 #endif
 
@@ -734,7 +736,7 @@ namespace fcjson
         {
             if (!json_type::json_type_bool == m_type)
             {
-                throw json_exception(_T("AsBool(): JsonType::eBool == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return m_data._bool;
@@ -744,7 +746,7 @@ namespace fcjson
         {
             if (!(json_type::json_type_int == m_type || json_type::json_type_uint == m_type))
             {
-                throw json_exception(_T("AsInt(): JsonType::eInteger == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return m_data._int;
@@ -754,7 +756,7 @@ namespace fcjson
         {
             if (!(json_type::json_type_int == m_type || json_type::json_type_uint == m_type))
             {
-                throw json_exception(_T("AsInt(): JsonType::eInteger == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return m_data._uint;
@@ -764,7 +766,7 @@ namespace fcjson
         {
             if (!json_type::json_type_float == m_type)
             {
-                throw json_exception(_T("AsFloat(): JsonType::eFloat == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return m_data._float;
@@ -774,7 +776,7 @@ namespace fcjson
         {
             if (!json_type::json_type_string == m_type)
             {
-                throw json_exception(_T("AsString(): JsonType::eString == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return *m_data._string_ptr;
@@ -784,7 +786,7 @@ namespace fcjson
         {
             if (!json_type::json_type_object == m_type)
             {
-                throw json_exception(_T("AsObject(): JsonType::eObject == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return *m_data._object_ptr;
@@ -794,7 +796,7 @@ namespace fcjson
         {
             if (!json_type::json_type_array == m_type)
             {
-                throw json_exception(_T("AsArray(): JsonType::eArray == m_Type"));
+                throw json_exception(__JSON_FUNCTION__);
             }
 
             return *m_data._array_ptr;
