@@ -162,6 +162,7 @@ namespace fcjson
         bool is_bool() const;
         bool is_int() const;
         bool is_float() const;
+        bool is_number() const;
         bool is_string() const;
         bool is_object() const;
         bool is_array() const;
@@ -192,6 +193,8 @@ namespace fcjson
         void clear();
 
     private:
+
+        json_value& _get_none() const;
 
         // Reset type
         inline void _reset_type(json_type type);
