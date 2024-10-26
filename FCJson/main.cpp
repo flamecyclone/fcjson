@@ -17,20 +17,10 @@ int dump_indent = 4;
 
 int main()
 {
-    setlocale(LC_ALL, "zh_CN.UTF-8");
-    system("chcp 65001");
+    setlocale(LC_ALL, "en_US.UTF-8");
 
-    // 解析文件/转储文件
-    std::cout << std::endl;
-    std::cout << "解析文件/转储文件" << std::endl;
-    {
-        fcjson::json_value val;
-        val.parse_from_file("data.json");
-        val.dump_to_file("dump.json", 4);
-    }
-
-    // 构造 JSON 对象
-    std::cout << "构造 JSON 对象" << std::endl;
+    // Construct a JSON object
+    std::cout << "Construct a JSON object" << std::endl;
     {
         fcjson::json_value val = fcjson::json_object{
             { "null", nullptr},
@@ -52,33 +42,33 @@ int main()
             }
         };
 
-        // 序列化(不转义UNICODE字符)
-        std::string str_dump = val.dump(4, false);
+        // Serialize (without escaping UNICODE characters)
         std::cout << val.dump(4, false) << std::endl;
 
-        // 序列化(转义UNICODE字符)
+        // Serialization (with escaping UNICODE characters)
         std::cout << val.dump(4, true) << std::endl;
     }
 
-    // 赋值操作
+    // Assignment Operation
     std::cout << std::endl;
-    std::cout << "赋值操作" << std::endl;
+    std::cout << "Assignment Operation" << std::endl;
     {
         fcjson::json_value val;
+
         val = fcjson::json_array{ 1,2,3,4,5,6,7,8,9,0 };
         std::cout << "count: " << val.count() << std::endl;
         std::cout << "type: " << val.type_name() << std::endl;
         std::cout << val.dump(4, false) << std::endl;
 
-        val = fcjson::json_object{{ "name", "我是地球🌍" }, { "age", 30 }};
+        val = fcjson::json_object{ { "name", "我是地球🌍" }, { "age", 30 } };
         std::cout << "count: " << val.count() << std::endl;
         std::cout << "type: " << val.type_name() << std::endl;
         std::cout << val.dump(4, false) << std::endl;
     }
 
-    // 解析字符串/转储字符串
+    // Parse String / Dump String
     std::cout << std::endl;
-    std::cout << "解析字符串/转储字符串" << std::endl;
+    std::cout << "Parse String / Dump String" << std::endl;
     {
         fcjson::json_value val;
 
@@ -86,7 +76,7 @@ int main()
         std::string strJson = val.dump(4, true);
         std::cout << strJson << std::endl;
 
-        // 访问数组
+        // Access Array
         val["array"] = fcjson::json_type::json_type_array;
         auto& array = val["array"];
         for (int i = 0; i < 5; i++)
@@ -94,10 +84,10 @@ int main()
             array[i] = i;
         }
 
-        // 删除数组元素
+        // Delete Array Element
         array.remove(4);
 
-        // 访问对象
+        // Access Object
         val["object"] = fcjson::json_type::json_type_object;
         auto& object = val["object"];
         for (int i = 0; i < 5; i++)
@@ -105,10 +95,10 @@ int main()
             object[std::to_string(i)] = i;
         }
 
-        // 删除对象元素
-        object.remove("1");
+        // Delete Object Element
+        object.remove("");
 
-        //赋值
+        // Assignment
         val["hobby"] = "C++";
         val.remove("object");
         val["hobby"] = nullptr;
@@ -116,30 +106,13 @@ int main()
         std::cout << val.dump(4, true) << std::endl;
     }
 
-    //多层嵌套
+    // Parse File / Dump File
     std::cout << std::endl;
-    std::cout << "多层嵌套" << std::endl;
+    std::cout << "Parse File / Dump File" << std::endl;
     {
-        fcjson::json_value val = fcjson::json_type::json_type_array;
-        val[0] = fcjson::json_type::json_type_array;
-        val[0][0] = fcjson::json_type::json_type_array;
-        val[0][0][0] = fcjson::json_type::json_type_object;
-
-        val[0][0][0]["string"] = "hello json";
-        val[0][0][0]["object"] = fcjson::json_type::json_type_object;
-        val[0][0][0]["object"]["name"] = "🌍FlameCyclone🌍";
-        val[0][0][0]["object"]["age"] = 30;
-
-        // 访问无效的元素将什么也不会发生
-        val[0][1][2][4][5][6][7][8][9][10][11][12][13][14][15] = "test";
-
-        std::cout << "type: " << val[0][1][2][4][5][6][7][8][9][10][11][12][13][14][15].type_name() << std::endl;
-        std::cout << "count: " << val[0][1][2][4][5][6][7][8][9][10][11][12][13][14][15].count() << std::endl;
-
-        // 序列化(转义UNICODE字符)
-        std::cout << val.dump(4, false) << std::endl;
-        std::cout << val.dump(4, true) << std::endl;
-
+        fcjson::json_value val;
+        val.parse_from_file("data.json");
+        val.dump_to_file("dump.json", 4);
     }
 
     std::ifstream inputFile(TEST_JSON_FILE, std::ios::binary | std::ios::in);
@@ -156,20 +129,18 @@ int main()
     inputFile.read((char*)&strBuffer[0], nSize);
     inputFile.close();
 
-    // 性能测试
+    // Performance Testing
     size_t nCount = count;
     clock_t timeBegin = clock();
     clock_t timeEnd = clock();
 
     std::cout << std::endl;
-    std::cout << "性能测试" << std::endl;
-
-    std::string strText;
-
+    std::cout << "Performance Testing" << std::endl;
     while (true)
     {
         {
             fcjson::json_value val;
+            val.parse_from_file("data.json");
 
             timeBegin = clock();
             for (int i = 0; i < nCount; i++)
@@ -183,7 +154,7 @@ int main()
             std::string strDump;
             for (int i = 0; i < nCount; i++)
             {
-                strDump = val.dump(dump_indent, false);
+                strDump = val.dump(dump_indent);
             }
             timeEnd = clock();
             std::cout << "dump cost time: " << timeEnd - timeBegin << std::endl;
