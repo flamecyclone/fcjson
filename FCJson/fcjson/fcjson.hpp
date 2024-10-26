@@ -599,7 +599,7 @@ namespace fcjson
                 return _get_none();
             }
 
-            if (json_type::json_type_array != m_type)
+            if (!is_array())
             {
                 return _get_none();
             }
@@ -644,7 +644,7 @@ namespace fcjson
             return _T("None");
         }
 
-        bool remove(const _tstring& name)
+        bool remove_object_item(const _tstring& name)
         {
             if (!is_object())
             {
@@ -668,7 +668,7 @@ namespace fcjson
             return true;
         }
 
-        bool remove(const size_t index)
+        bool remove_array_item(const size_t index)
         {
             if (!is_array())
             {
@@ -804,61 +804,60 @@ namespace fcjson
 
         void clear()
         {
-            if (json_type::json_type_null != m_type)
+            switch (m_type)
             {
-                switch (m_type)
-                {
-                case json_type::json_type_string:
-                {
-                    delete m_data._string_ptr;
-                }
-                break;
-                case json_type::json_type_object:
-                {
-                    delete m_data._object_ptr;
-                }
-                break;
-                case json_type::json_type_array:
-                {
-                    delete m_data._array_ptr;
-                }
-                break;
-                }
-
-                m_data = { 0 };
-                m_type = json_type::json_type_null;
+            case json_type::json_type_string:
+            {
+                delete m_data._string_ptr;
             }
+            break;
+            case json_type::json_type_object:
+            {
+                delete m_data._object_ptr;
+            }
+            break;
+            case json_type::json_type_array:
+            {
+                delete m_data._array_ptr;
+            }
+            break;
+            }
+
+            m_data = { 0 };
         }
 
-        size_t count(const _tstring& name = _T("")) const
+        size_t array_count() const
         {
-            if (this == &_get_none())
+            if (is_array() && m_data._array_ptr)
+            {
+                return m_data._array_ptr->size();
+            }
+
+            return 0;
+        }
+
+        size_t object_count(const _tstring& name) const
+        {
+            if (!is_object())
             {
                 return 0;
             }
 
-            if (name.empty())
+            if (m_data._object_ptr)
             {
-                if (json_type::json_type_object == m_type && m_data._object_ptr)
+                if (name.empty())
                 {
                     return m_data._object_ptr->size();
                 }
 
-                if (json_type::json_type_array == m_type && m_data._array_ptr)
+                auto it_find = m_data._object_ptr->find(name);
+                if (m_data._object_ptr->end() != it_find)
                 {
-                    return m_data._array_ptr->size();
+                    return 1;
                 }
-
-                return 1;
             }
 
-            auto it_find = m_data._object_ptr->find(name);
-            if (m_data._object_ptr->end() == it_find)
-            {
-                return 0;
-            }
-
-            return it_find->second.count(_T(""));
+            return 0;
         }
 
         bool parse(const _tstring& text)
@@ -1851,7 +1850,7 @@ namespace fcjson
 
             if (!result_flag)
             {
-                val.clear();
+                _reset_type(json_type::json_type_null);
             }
 
             if (end_ptr)
