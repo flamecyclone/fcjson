@@ -186,10 +186,10 @@ namespace fcjson
         bool dump_to_file(const _tstring& file_path, int indent = 0, bool flag_escape = false, json_encoding enc = json_encoding::json_encoding_auto);
 
         // Others
-        bool remove_object_item(const _tstring& name);
-        bool remove_array_item(const size_t index);
-        size_t array_count() const;
-        size_t object_count(const _tstring& name = _T("")) const;
+        size_t count() const;
+        bool is_value(const _tstring& name = _T("")) const;
+        bool remove(const _tstring& name);
+        bool remove(const size_t index);
         json_type type() const;
         _tstring type_name() const;
         void clear();

@@ -826,38 +826,38 @@ namespace fcjson
             m_data = { 0 };
         }
 
-        size_t array_count() const
+        size_t count(const _tstring& name = _T("")) const
         {
-            if (is_array() && m_data._array_ptr)
-            {
-                return m_data._array_ptr->size();
-            }
-
-            return 0;
-        }
-
-        size_t object_count(const _tstring& name) const
-        {
-            if (!is_object())
+            if (this == &_get_none())
             {
                 return 0;
             }
 
-            if (m_data._object_ptr)
+            if (is_array())
             {
-                if (name.empty())
+                if (name.empty() && m_data._array_ptr)
                 {
-                    return m_data._object_ptr->size();
+                    return m_data._array_ptr->size();
                 }
-
-                auto it_find = m_data._object_ptr->find(name);
-                if (m_data._object_ptr->end() != it_find)
+            }
+            else if (is_object())
+            {
+                if (m_data._object_ptr)
                 {
-                    return 1;
+                    if (name.empty())
+                    {
+                        return m_data._object_ptr->size();
+                    }
+
+                    auto it_find = m_data._object_ptr->find(name);
+                    if (m_data._object_ptr->end() == it_find)
+                    {
+                        return 0;
+                    }
                 }
             }
 
-            return 0;
+            return 1;
         }
 
         bool parse(const _tstring& text)

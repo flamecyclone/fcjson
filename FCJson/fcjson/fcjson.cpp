@@ -595,7 +595,7 @@ namespace fcjson
         return _T("None");
     }
 
-    bool json_value::remove_object_item(const _tstring& name)
+    bool json_value::remove(const _tstring& name)
     {
         if (!is_object())
         {
@@ -619,7 +619,7 @@ namespace fcjson
         return true;
     }
 
-    bool json_value::remove_array_item(const size_t index)
+    bool json_value::remove(const size_t index)
     {
         if (!is_array())
         {
@@ -795,35 +795,40 @@ namespace fcjson
         m_data = { 0 };
     }
 
-    size_t json_value::array_count() const
+    bool json_value::is_value(const _tstring& name) const
     {
+        if (this == &_get_none())
+        {
+            return false;
+        }
+
+        if(is_object() && m_data._object_ptr)
+        {
+            auto it_find = m_data._object_ptr->find(name);
+            if (m_data._object_ptr->end() != it_find)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    size_t json_value::count() const
+    {
+        if (this == &_get_none())
+        {
+            return 0;
+        }
+
         if (is_array() && m_data._array_ptr)
         {
             return m_data._array_ptr->size();
         }
 
-        return 0;
-    }
-
-    size_t json_value::object_count(const _tstring& name) const
-    {
-        if (!is_object())
+        if (is_object() && m_data._object_ptr)
         {
-            return 0;
-        }
-
-        if (m_data._object_ptr)
-        {
-            if (name.empty())
-            {
-                return m_data._object_ptr->size();
-            }
-
-            auto it_find = m_data._object_ptr->find(name);
-            if (m_data._object_ptr->end() != it_find)
-            {
-                return 1;
-            }
+            return m_data._object_ptr->size();
         }
 
         return 0;
