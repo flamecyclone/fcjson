@@ -403,9 +403,9 @@ namespace fcjson
         }
 
         _reset_type(json_type::json_type_string);
-        if (nullptr == m_data._string_ptr)
+        if (nullptr != m_data._string_ptr)
         {
-            m_data._string_ptr = new (std::nothrow) json_string(val);
+            *m_data._string_ptr = val;
         }
         return *this;
     }
@@ -418,9 +418,9 @@ namespace fcjson
         }
 
         _reset_type(json_type::json_type_object);
-        if (nullptr == m_data._object_ptr)
+        if (nullptr != m_data._object_ptr)
         {
-            m_data._object_ptr = new (std::nothrow) json_object(val);
+            *m_data._object_ptr = val;
         }
         return *this;
     }
@@ -433,9 +433,9 @@ namespace fcjson
         }
 
         _reset_type(json_type::json_type_array);
-        if (nullptr == m_data._array_ptr)
+        if (nullptr != m_data._array_ptr)
         {
-            m_data._array_ptr = new (std::nothrow) json_array(val);
+            *m_data._array_ptr = val;
         }
         return *this;
     }
