@@ -194,6 +194,30 @@ namespace fcjson
         _tstring type_name() const;
         void clear();
 
+#ifdef _WIN32
+
+        // ANSI字符转换
+        static std::wstring AStrToWStr(const std::string& str);
+        static std::string AStrToU8Str(const std::string& str);
+        static _tstring AStrToTStr(const std::string& str);
+
+        // 宽字符串转换
+        static std::string WStrToU8Str(const std::wstring& str);
+        static std::string WStrToAStr(const std::wstring& str);
+        static _tstring WStrToTStr(const std::wstring& str);
+
+        // UTF-8字符串转换
+        static std::wstring U8StrToWStr(const std::string& str);
+        static std::string U8StrToAStr(const std::string& str);
+        static _tstring U8StrToTStr(const std::string& str);
+
+        // 中立字符串转换
+        static std::string TStrToAStr(const _tstring& str);
+        static std::wstring TStrToWStr(const _tstring& str);
+        static std::string TStrToU8Str(const _tstring& str);
+
+#endif
+
     private:
 
         static json_value& _get_none();
