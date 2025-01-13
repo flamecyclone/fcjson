@@ -4,6 +4,10 @@
 #include <cstring>
 #include <cstdio>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 // UTF-8 encoding standard
 // 
 // 1Byte  U+0000000 - U+0000007F 0xxxxxxx
@@ -1797,6 +1801,8 @@ namespace fcjson
 
         } while (false);
 
+        data_ptr = _skip_whitespace(data_ptr);
+
         if (*end_ptr)
         {
             *end_ptr = data_ptr;
@@ -2373,4 +2379,111 @@ namespace fcjson
 
         return ch_count;
     }
+
+#ifdef _WIN32
+
+    static std::string _WStrToMultiStr(uint32_t CodePage, const std::wstring& str)
+    {
+        int cbMultiByte = ::WideCharToMultiByte(CodePage, 0, str.c_str(), -1, NULL, 0, NULL, 0);
+        std::string strResult(cbMultiByte, 0);
+        size_t nConverted = ::WideCharToMultiByte(CodePage, 0, str.c_str(), (int)str.size(), &strResult[0], (int)strResult.size(), NULL, NULL);
+        strResult.resize(nConverted);
+        return strResult;
+    }
+
+    static std::wstring _MultiStrToWStr(uint32_t CodePage, const std::string& str)
+    {
+        int cchWideChar = ::MultiByteToWideChar(CodePage, 0, str.c_str(), -1, NULL, NULL);
+        std::wstring strResult(cchWideChar, 0);
+        size_t nConverted = ::MultiByteToWideChar(CodePage, 0, str.c_str(), (int)str.size(), &strResult[0], (int)strResult.size());
+        strResult.resize(nConverted);
+        return strResult;
+    }
+
+    std::wstring AStrToWStr(const std::string& str)
+    {
+        return _MultiStrToWStr(CP_ACP, str);
+    }
+
+    std::string AStrToU8Str(const std::string& str)
+    {
+        return _WStrToMultiStr(CP_UTF8, _MultiStrToWStr(CP_ACP, str));
+    }
+
+    _tstring AStrToTStr(const std::string& str)
+    {
+#ifdef _UNICODE
+        return _MultiStrToWStr(CP_ACP, str);
+#else
+        return str;
+#endif
+    }
+
+    std::string WStrToAStr(const std::wstring& str)
+    {
+        return _WStrToMultiStr(CP_ACP, str);
+    }
+
+    std::string WStrToU8Str(const std::wstring& str)
+    {
+        return _WStrToMultiStr(CP_UTF8, str);
+    }
+
+    _tstring WStrToTStr(const std::wstring& str)
+    {
+#ifdef _UNICODE
+        return str;
+#else
+        return _WStrToMultiStr(CP_ACP, str);
+#endif
+    }
+
+    std::wstring U8StrToWStr(const std::string& str)
+    {
+        return _MultiStrToWStr(CP_UTF8, str);
+    }
+
+    std::string U8StrToAStr(const std::string& str)
+    {
+        return _WStrToMultiStr(CP_ACP, U8StrToWStr(str));
+    }
+
+    _tstring U8StrToTStr(const std::string& str)
+    {
+#ifdef _UNICODE
+        return _MultiStrToWStr(CP_UTF8, str);
+#else
+        return _WStrToMultiStr(CP_ACP, U8StrToWStr(str));
+#endif
+    }
+
+    std::string TStrToU8Str(const _tstring& str)
+    {
+#ifdef _UNICODE
+        return _WStrToMultiStr(CP_UTF8, str);
+#else
+        return _WStrToMultiStr(CP_UTF8, _MultiStrToWStr(CP_ACP, str));
+#endif
+    }
+
+    std::string TStrToAStr(const _tstring& str)
+    {
+#ifdef _UNICODE
+        return _WStrToMultiStr(CP_ACP, str);
+#else
+        return str;
+#endif
+    }
+
+    std::wstring TStrToWStr(const _tstring& str)
+    {
+#ifdef _UNICODE
+        return str;
+#else
+        return _MultiStrToWStr(CP_ACP, str);
+#endif
+    }
+
+#endif
+
 }

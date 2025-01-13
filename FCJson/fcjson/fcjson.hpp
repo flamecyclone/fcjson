@@ -1829,6 +1829,8 @@ namespace fcjson
 
             } while (false);
 
+            data_ptr = _skip_whitespace(data_ptr);
+
             if (*end_ptr)
             {
                 *end_ptr = data_ptr;
