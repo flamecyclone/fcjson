@@ -309,25 +309,22 @@ namespace fcjson
                 return;
             }
 
-            if (type != m_type)
+            clear();
+            m_type = type;
+
+            if (json_type::json_type_string == m_type)
             {
-                clear();
-                m_type = type;
+                m_data._string_ptr = new (std::nothrow) json_string;
+            }
 
-                if (json_type::json_type_string == m_type)
-                {
-                    m_data._string_ptr = new (std::nothrow) json_string;
-                }
+            if (json_type::json_type_array == m_type)
+            {
+                m_data._array_ptr = new (std::nothrow) json_array;
+            }
 
-                if (json_type::json_type_array == m_type)
-                {
-                    m_data._array_ptr = new (std::nothrow) json_array;
-                }
-
-                if (json_type::json_type_object == m_type)
-                {
-                    m_data._object_ptr = new (std::nothrow) json_object;
-                }
+            if (json_type::json_type_object == m_type)
+            {
+                m_data._object_ptr = new (std::nothrow) json_object;
             }
         }
 
