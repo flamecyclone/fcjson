@@ -64,6 +64,8 @@ namespace fcjson
     static bool _get_unicode_string(_tstring& append_str, const _tchar* data_ptr, const _tchar** end_ptr);
     static int32_t _utf8_to_utf16(const void* data_ptr, size_t size = -1, std::string* text_utf8_ptr = nullptr, std::wstring* text_utf16_ptr = nullptr);
     static int32_t _utf16_to_utf8(const void* data_ptr, size_t size = -1, std::string* text_utf8_ptr = nullptr, std::wstring* text_utf16_ptr = nullptr);
+    static std::string _utf16_to_utf8(const std::wstring utf16);
+    static std::wstring _utf8_to_utf16(const std::string utf8);
     inline const _tchar* _skip_whitespace(const _tchar* data_ptr);
     inline const _tchar* _skip_bom(const _tchar* data_ptr);
     static bool _skip_digit(const _tchar* data_ptr, const _tchar** end_ptr);
@@ -100,13 +102,6 @@ namespace fcjson
 
 #endif
         return data_ptr;
-    }
-
-    json_value::json_value()
-        :
-        m_data{ 0 },
-        m_type(json_type::json_type_null)
-    {
     }
 
     json_value::json_value(json_type type) :
@@ -183,22 +178,29 @@ namespace fcjson
         }
     }
 
-    json_value::json_value(const json_string& val)
+    json_value::json_value(const json_string& r)
     {
         m_type = json_type::json_type_string;
-        m_data._string_ptr = new (std::nothrow) json_string(val);
+        m_data._string_ptr = new (std::nothrow) json_string(r);
     }
 
-    json_value::json_value(const json_object& val)
+    json_value::json_value(const json_object& r)
     {
         m_type = json_type::json_type_object;
-        m_data._object_ptr = new (std::nothrow) json_object(val);
+        m_data._object_ptr = new (std::nothrow) json_object(r);
     }
 
-    json_value::json_value(const json_array& val)
+    json_value::json_value(const json_array& r)
     {
         m_type = json_type::json_type_array;
-        m_data._array_ptr = new (std::nothrow) json_array(val);
+        m_data._array_ptr = new (std::nothrow) json_array(r);
+    }
+
+    json_value::json_value(const json_bin& r)
+    {
+        m_type = json_type::json_type_bin;
+        m_data._raw_ptr = new (std::nothrow) json_bin(r);
+
     }
 
     json_value::json_value(const json_value& r)
@@ -230,22 +232,28 @@ namespace fcjson
         }
     }
 
-    json_value::json_value(json_string&& val)
+    json_value::json_value(json_string&& r)
     {
         m_type = json_type::json_type_string;
-        m_data._string_ptr = new (std::nothrow) json_string(std::move(val));
+        m_data._string_ptr = new (std::nothrow) json_string(std::move(r));
     }
 
-    json_value::json_value(json_object&& val)
+    json_value::json_value(json_object&& r)
     {
         m_type = json_type::json_type_object;
-        m_data._object_ptr = new (std::nothrow) json_object(std::move(val));
+        m_data._object_ptr = new (std::nothrow) json_object(std::move(r));
     }
 
-    json_value::json_value(json_array&& val)
+    json_value::json_value(json_array&& r)
     {
         m_type = json_type::json_type_array;
-        m_data._array_ptr = new (std::nothrow) json_array(std::move(val));
+        m_data._array_ptr = new (std::nothrow) json_array(std::move(r));
+    }
+
+    json_value::json_value(json_bin&& r)
+    {
+        m_type = json_type::json_type_bin;
+        m_data._raw_ptr = new (std::nothrow) json_bin(std::move(r));
     }
 
     json_value::json_value(json_value&& r) noexcept
@@ -257,9 +265,50 @@ namespace fcjson
         r.m_type = json_type::json_type_null;
     }
 
+    void json_value::clear()
+    {
+        switch (m_type)
+        {
+        case json_type::json_type_string:
+        {
+            if (m_data._string_ptr)
+            {
+                delete m_data._string_ptr;
+            }
+        }
+        break;
+        case json_type::json_type_object:
+        {
+            if (m_data._object_ptr)
+            {
+                delete m_data._object_ptr;
+            }
+        }
+        break;
+        case json_type::json_type_array:
+        {
+            if (m_data._array_ptr)
+            {
+                delete m_data._array_ptr;
+            }
+        }
+        break;
+        case json_type::json_type_bin:
+        {
+            if (m_data._raw_ptr)
+            {
+                delete m_data._raw_ptr;
+            }
+        }
+        break;
+        }
+
+        m_data = { 0 };
+    }
+
     inline void json_value::_reset_type(json_type type)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
             return;
         }
@@ -281,13 +330,18 @@ namespace fcjson
         {
             m_data._object_ptr = new (std::nothrow) json_object;
         }
+
+        if (json_type::json_type_bin == m_type)
+        {
+            m_data._raw_ptr = new (std::nothrow) json_bin;
+        }
     }
 
     json_value& json_value::operator = (nullptr_t)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_null);
@@ -296,9 +350,9 @@ namespace fcjson
 
     json_value& json_value::operator = (json_type type)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(type);
@@ -307,9 +361,9 @@ namespace fcjson
 
     json_value& json_value::operator = (json_bool val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_bool);
@@ -319,9 +373,9 @@ namespace fcjson
 
     json_value& json_value::operator = (int32_t val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_int);
@@ -331,9 +385,9 @@ namespace fcjson
 
     json_value& json_value::operator = (uint32_t val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_int);
@@ -343,9 +397,9 @@ namespace fcjson
 
     json_value& json_value::operator = (int64_t val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_int);
@@ -355,9 +409,9 @@ namespace fcjson
 
     json_value& json_value::operator = (uint64_t val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_uint);
@@ -367,9 +421,9 @@ namespace fcjson
 
     json_value& json_value::operator = (json_float val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_float);
@@ -379,9 +433,9 @@ namespace fcjson
 
     json_value& json_value::operator = (const _tchar* val)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_string);
@@ -392,56 +446,56 @@ namespace fcjson
         return *this;
     }
 
-    json_value& json_value::operator = (const json_string& val)
+    json_value& json_value::operator = (const json_string& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_string);
         if (nullptr != m_data._string_ptr)
         {
-            *m_data._string_ptr = val;
+            *m_data._string_ptr = r;
         }
         return *this;
     }
 
-    json_value& json_value::operator = (const json_object& val)
+    json_value& json_value::operator = (const json_object& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_object);
         if (nullptr != m_data._object_ptr)
         {
-            *m_data._object_ptr = val;
+            *m_data._object_ptr = r;
         }
         return *this;
     }
 
-    json_value& json_value::operator = (const json_array& val)
+    json_value& json_value::operator = (const json_array& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_array);
         if (nullptr != m_data._array_ptr)
         {
-            *m_data._array_ptr = val;
+            *m_data._array_ptr = r;
         }
         return *this;
     }
 
     json_value& json_value::operator = (const json_value& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         if (&r != this)
@@ -466,6 +520,11 @@ namespace fcjson
                 m_data._array_ptr = new (std::nothrow) json_array(*r.m_data._array_ptr);
             }
             break;
+            case json_type::json_type_bin:
+            {
+                m_data._raw_ptr = new (std::nothrow) json_bin(*r.m_data._raw_ptr);
+            }
+            break;
             default:
             {
                 m_data = r.m_data;
@@ -477,56 +536,56 @@ namespace fcjson
         return *this;
     }
 
-    json_value& json_value::operator = (json_string&& val)
+    json_value& json_value::operator = (json_string&& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_string);
         if (nullptr != m_data._string_ptr)
         {
-            *m_data._string_ptr = std::move(val);
+            *m_data._string_ptr = std::move(r);
         }
         return *this;
     }
 
-    json_value& json_value::operator = (json_object&& val)
+    json_value& json_value::operator = (json_object&& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_object);
         if (nullptr != m_data._object_ptr)
         {
-            *m_data._object_ptr = std::move(val);
+            *m_data._object_ptr = std::move(r);
         }
         return *this;
     }
 
-    json_value& json_value::operator = (json_array&& val)
+    json_value& json_value::operator = (json_array&& r)
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         _reset_type(json_type::json_type_array);
         if (nullptr != m_data._array_ptr)
         {
-            *m_data._array_ptr = std::move(val);
+            *m_data._array_ptr = std::move(r);
         }
         return *this;
     }
 
     json_value& json_value::operator = (json_value&& r) noexcept
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         if (&r != this)
@@ -544,14 +603,14 @@ namespace fcjson
 
     json_value& json_value::operator[](const _tstring& val_name) noexcept
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         if (!is_object())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         if (nullptr == m_data._object_ptr)
@@ -559,7 +618,7 @@ namespace fcjson
             m_data._object_ptr = new (std::nothrow) json_object;
             if (nullptr == m_data._object_ptr)
             {
-                return _get_none();
+                return _get_none_value();
             }
         }
 
@@ -575,14 +634,14 @@ namespace fcjson
 
     json_value& json_value::operator[](size_t index) noexcept
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         if (!is_array())
         {
-            return _get_none();
+            return _get_none_value();
         }
 
         if (nullptr == m_data._array_ptr)
@@ -590,7 +649,7 @@ namespace fcjson
             m_data._array_ptr = new (std::nothrow) json_array;
             if (nullptr == m_data._array_ptr)
             {
-                return _get_none();
+                return _get_none_value();
             }
         }
 
@@ -712,9 +771,14 @@ namespace fcjson
         return json_type::json_type_array == m_type;
     }
 
+    bool json_value::is_bin() const
+    {
+        return json_type::json_type_bin == m_type;
+    }
+
     json_bool json_value::as_bool() const
     {
-        if (!json_type::json_type_bool == m_type)
+        if (json_type::json_type_bool != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
         }
@@ -744,7 +808,7 @@ namespace fcjson
 
     json_float json_value::as_float() const
     {
-        if (!json_type::json_type_float == m_type)
+        if (json_type::json_type_float != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
         }
@@ -764,7 +828,7 @@ namespace fcjson
 
     json_string& json_value::as_string() const
     {
-        if (!json_type::json_type_string == m_type)
+        if (json_type::json_type_string != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
         }
@@ -774,7 +838,7 @@ namespace fcjson
 
     json_object& json_value::as_object() const
     {
-        if (!json_type::json_type_object == m_type)
+        if (json_type::json_type_object != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
         }
@@ -784,7 +848,7 @@ namespace fcjson
 
     json_array& json_value::as_array() const
     {
-        if (!json_type::json_type_array == m_type)
+        if (json_type::json_type_array != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
         }
@@ -792,47 +856,24 @@ namespace fcjson
         return *m_data._array_ptr;
     }
 
-    void json_value::clear()
+    json_bin& json_value::as_bin() const
     {
-        switch (m_type)
+        if (json_type::json_type_bin != m_type)
         {
-        case json_type::json_type_string:
-        {
-            if (m_data._string_ptr)
-            {
-                delete m_data._string_ptr;
-            }
-        }
-        break;
-        case json_type::json_type_object:
-        {
-            if (m_data._object_ptr)
-            {
-                delete m_data._object_ptr;
-            }
-        }
-        break;
-        case json_type::json_type_array:
-        {
-            if (m_data._array_ptr)
-            {
-                delete m_data._array_ptr;
-            }
-        }
-        break;
+            throw json_exception(__JSON_FUNCTION__);
         }
 
-        m_data = { 0 };
+        return *m_data._raw_ptr;
     }
 
     bool json_value::is_value(const _tstring& name) const
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
             return false;
         }
 
-        if(is_object() && m_data._object_ptr)
+        if (is_object() && m_data._object_ptr)
         {
             auto it_find = m_data._object_ptr->find(name);
             if (m_data._object_ptr->end() != it_find)
@@ -846,7 +887,7 @@ namespace fcjson
 
     size_t json_value::count() const
     {
-        if (this == &_get_none())
+        if (this == &_get_none_value())
         {
             return 0;
         }
@@ -871,9 +912,8 @@ namespace fcjson
         return _parse(text.c_str(), *this, &end_ptr);
     }
 
-    bool json_value::parse_from_file(const _tstring& strPath)
+    bool json_value::parse_from_file(const _tstring& file_path)
     {
-
         std::string str_utf8;
         std::wstring str_utf16;
         _tstring read_text;
@@ -881,7 +921,7 @@ namespace fcjson
         clear();
         do
         {
-            std::ifstream input_file(strPath, std::ios::binary | std::ios::in);
+            std::ifstream input_file(file_path, std::ios::binary | std::ios::in);
             if (!input_file.is_open())
             {
                 return false;
@@ -939,10 +979,40 @@ namespace fcjson
         return _parse(read_text.c_str(), *this, &end_ptr);
     }
 
+    bool json_value::parse_from_binary(uint8_t* data, size_t size)
+    {
+        clear();
+        const uint8_t* data_end = data + size;
+        return _parse_raw(data, &data_end, *this);
+    }
+
+    bool json_value::parse_from_binary_file(const _tstring& file_path)
+    {
+        clear();
+
+        std::ifstream input_file(file_path, std::ios::binary | std::ios::in);
+        if (!input_file.is_open())
+        {
+            return false;
+        }
+
+        input_file.seekg(0, std::ios::end);
+        std::streamoff text_size = input_file.tellg();
+        input_file.seekg(0, std::ios::beg);
+
+        std::vector<uint8_t> text_buffer(text_size, 0);
+        input_file.read((char*)&text_buffer[0], text_size);
+        size_t byte_count = (size_t)input_file.gcount();
+        input_file.close();
+
+        const uint8_t* data_end = text_buffer.data() + text_buffer.size();
+        return _parse_raw(text_buffer.data(), &data_end, *this);
+    }
+
     _tstring json_value::dump(int indent/* = 0*/, bool flag_escape/* = false*/) const
     {
         _tstring result_text;
-        std::vector<_tstring> indent_text({_T("")});
+        std::vector<_tstring> indent_text({ _T("") });
         _dump(result_text, indent_text, 0, indent, flag_escape);
         return result_text;
     }
@@ -950,7 +1020,7 @@ namespace fcjson
     bool json_value::dump_to_file(const _tstring& strPath, int indent/* = 0*/, bool flag_escape/* = false*/, json_encoding encoding/* = json_encoding::json_encoding_auto*/)
     {
         _tstring dump_text;
-        std::vector<_tstring> indent_text({_T("")});
+        std::vector<_tstring> indent_text({ _T("") });
         _dump(dump_text, indent_text, 0, indent, flag_escape);
 
         std::string str_utf8;
@@ -1577,7 +1647,593 @@ namespace fcjson
         }
     }
 
-    json_value& json_value::_get_none()
+    void json_value::_dump_raw_int(std::vector<uint8_t>& append_buf, int64_t val) const
+    {
+        union _data_info
+        {
+            int64_t data;
+            uint8_t bytes[sizeof(int64_t)];
+        }data_info;
+
+        data_info.data = val;
+        int data_size = sizeof(int64_t);
+
+        if (val <= INT8_MAX && val >= INT8_MIN)
+        {
+            append_buf.push_back(json_raw_type::raw_int8);
+            data_size = sizeof(uint8_t);
+        }
+        else if (val <= INT16_MAX && val >= INT16_MIN)
+        {
+            append_buf.push_back(json_raw_type::raw_int16);
+            data_size = sizeof(uint16_t);
+        }
+        else if (val <= INT32_MAX && val >= INT32_MIN)
+        {
+            append_buf.push_back(json_raw_type::raw_int32);
+            data_size = sizeof(uint32_t);
+        }
+        else
+        {
+            append_buf.push_back(json_raw_type::raw_int64);
+            data_size = sizeof(uint64_t);
+        }
+
+        for (int i = 0; i < data_size; i++)
+        {
+            append_buf.push_back(data_info.bytes[i]);
+        }
+    }
+
+    void json_value::_dump_raw_uint(std::vector<uint8_t>& append_buf, uint64_t val) const
+    {
+        union _data_info
+        {
+            uint64_t data;
+            uint8_t bytes[sizeof(uint64_t)];
+        }data_info;
+
+        data_info.data = val;
+        int data_size = sizeof(uint64_t);
+
+        if (val <= UINT8_MAX)
+        {
+            append_buf.push_back(json_raw_type::raw_uint8);
+            data_size = sizeof(uint8_t);
+        }
+        else if (val <= UINT16_MAX)
+        {
+            append_buf.push_back(json_raw_type::raw_uint16);
+            data_size = sizeof(uint16_t);
+        }
+        else if (val <= UINT32_MAX)
+        {
+            append_buf.push_back(json_raw_type::raw_uint32);
+            data_size = sizeof(uint32_t);
+        }
+        else
+        {
+            append_buf.push_back(json_raw_type::raw_uint64);
+            data_size = sizeof(uint64_t);
+        }
+
+        for (int i = 0; i < data_size; i++)
+        {
+            append_buf.push_back(data_info.bytes[i]);
+        }
+    }
+
+    void json_value::_dump_raw_float(std::vector<uint8_t>& append_buf, double val) const
+    {
+        union _data_info
+        {
+            double data;
+            uint8_t bytes[sizeof(double)];
+        }data_info;
+
+        data_info.data = val;
+
+        for (int i = 0; i < sizeof(double); i++)
+        {
+            append_buf.push_back(data_info.bytes[i]);
+        }
+    }
+
+    void json_value::_dump_raw_string(std::vector<uint8_t>& append_buf, const std::string& text) const
+    {
+        if (text.empty())
+        {
+            append_buf.push_back(json_raw_type::raw_string_empty);
+        }
+        else
+        {
+            int data_size = 0;
+            union _data_info
+            {
+                uint32_t data;
+                uint8_t bytes[sizeof(uint32_t)];
+            }data_info;
+
+            data_info.data = text.size();
+            if (data_info.data <= UINT8_MAX)
+            {
+                append_buf.push_back(json_raw_type::raw_string8);
+                data_size = sizeof(uint8_t);
+            }
+            else if (data_info.data <= UINT16_MAX)
+            {
+                append_buf.push_back(json_raw_type::raw_string16);
+                data_size = sizeof(uint16_t);
+            }
+            else
+            {
+                append_buf.push_back(json_raw_type::raw_string32);
+                data_size = sizeof(uint32_t);
+            }
+
+            for (int i = 0; i < data_size; i++)
+            {
+                append_buf.push_back(data_info.bytes[i]);
+            }
+
+            append_buf.insert(append_buf.end(), text.begin(), text.end());
+        }
+    }
+
+    void json_value::_dump_raw_object(std::vector<uint8_t>& append_buf, const json_object& object) const
+    {
+        for (const auto& item : object)
+        {
+#ifdef _UNICODE
+            _dump_raw_string(append_buf, _utf16_to_utf8(item.first));
+#else
+            _dump_raw_string(append_buf, item.first);
+#endif
+            item.second._dump_raw(append_buf);
+        }
+    }
+
+    void json_value::_dump_raw_array(std::vector<uint8_t>& append_buf, const json_array& arrry) const
+    {
+        for (const auto& item : arrry)
+        {
+            item._dump_raw(append_buf);
+        }
+    }
+
+    void json_value::_dump_raw_bin(std::vector<uint8_t>& append_buf, const json_bin& raw) const
+    {
+        if (raw.empty())
+        {
+            append_buf.push_back(json_raw_type::raw_bin_empty);
+        }
+        else
+        {
+            int data_size = 0;
+            union _data_info
+            {
+                uint32_t data;
+                uint8_t bytes[sizeof(uint32_t)];
+            }data_info;
+
+            data_info.data = raw.size();
+            if (data_info.data <= UINT8_MAX)
+            {
+                append_buf.push_back(json_raw_type::raw_bin8);
+                data_size = sizeof(uint8_t);
+            }
+            else if (data_info.data <= UINT16_MAX)
+            {
+                append_buf.push_back(json_raw_type::raw_bin16);
+                data_size = sizeof(uint16_t);
+            }
+            else
+            {
+                append_buf.push_back(json_raw_type::raw_bin32);
+                data_size = sizeof(uint32_t);
+            }
+
+            for (int i = 0; i < data_size; i++)
+            {
+                append_buf.push_back(data_info.bytes[i]);
+            }
+
+            append_buf.insert(append_buf.end(), raw.begin(), raw.end());
+        }
+    }
+
+    void json_value::_dump_raw(std::vector<uint8_t>& append_buf) const
+    {
+        switch (m_type)
+        {
+        case json_type::json_type_null:
+        {
+            append_buf.push_back(json_raw_type::raw_null);
+        }
+        break;
+        case json_type::json_type_bool:
+        {
+            if (m_data._bool)
+            {
+                append_buf.push_back(json_raw_type::raw_true);
+            }
+            else
+            {
+                append_buf.push_back(json_raw_type::raw_false);
+            }
+        }
+        break;
+        case json_type::json_type_int:
+        {
+            _dump_raw_int(append_buf, m_data._int);
+        }
+        break;
+        case json_type::json_type_uint:
+        {
+            _dump_raw_uint(append_buf, m_data._uint);
+        }
+        break;
+        case json_type::json_type_float:
+        {
+            append_buf.push_back(json_raw_type::raw_float);
+            _dump_raw_float(append_buf, m_data._float);
+        }
+        break;
+        case json_type::json_type_string:
+        {
+#ifdef _UNICODE
+            _dump_raw_string(append_buf, _utf16_to_utf8(*m_data._string_ptr));
+#else
+            _dump_raw_string(append_buf, *m_data._string_ptr);
+#endif
+        }
+        break;
+        case json_type::json_type_object:
+        {
+            if (m_data._object_ptr && !m_data._object_ptr->empty())
+            {
+                append_buf.push_back(json_raw_type::raw_object_beg);
+                _dump_raw_object(append_buf, *m_data._object_ptr);
+                append_buf.push_back(json_raw_type::raw_object_end);
+            }
+            else
+            {
+                append_buf.push_back(json_raw_type::raw_object_empty);
+            }
+        }
+        break;
+        case json_type::json_type_array:
+        {
+            if (m_data._array_ptr && !m_data._array_ptr->empty())
+            {
+                append_buf.push_back(json_raw_type::raw_array_beg);
+                _dump_raw_array(append_buf, *m_data._array_ptr);
+                append_buf.push_back(json_raw_type::raw_array_end);
+            }
+            else
+            {
+                append_buf.push_back(json_raw_type::raw_array_empty);
+            }
+        }
+        break;
+        case json_type::json_type_bin:
+        {
+            if (m_data._raw_ptr && !m_data._raw_ptr->empty())
+            {
+                _dump_raw_bin(append_buf, *m_data._raw_ptr);
+            }
+            else
+            {
+                append_buf.push_back(json_raw_type::raw_bin_empty);
+            }
+        }
+        break;
+        }
+    }
+
+    bool json_value::_parse_raw_string(const uint8_t* data_ptr, const uint8_t** end_ptr, json_value& val)
+    {
+        json_raw_type type = (json_raw_type)*data_ptr;
+        const uint8_t* date_value_ptr = data_ptr + sizeof(json_raw_type);
+        const uint8_t* data_next_ptr = data_ptr;
+        std::string str_value;
+
+        switch (*data_ptr)
+        {
+        case json_raw_type::raw_string_empty:
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_string8:
+            str_value = std::string((const char*)(date_value_ptr + sizeof(uint8_t)), *(uint8_t*)date_value_ptr);
+            data_next_ptr = date_value_ptr + sizeof(uint8_t) + *(uint8_t*)date_value_ptr;
+            break;
+        case json_raw_type::raw_string16:
+            str_value = std::string((const char*)(date_value_ptr + sizeof(uint16_t)), *(uint16_t*)date_value_ptr);
+            data_next_ptr = date_value_ptr + sizeof(uint16_t) + *(uint16_t*)date_value_ptr;
+            break;
+        case json_raw_type::raw_string32:
+            str_value = std::string((const char*)(date_value_ptr + sizeof(uint32_t)), *(uint32_t*)date_value_ptr);
+            data_next_ptr = date_value_ptr + sizeof(uint32_t) + *(uint32_t*)date_value_ptr;
+            break;
+        }
+
+#ifdef _UNICODE
+        val = _utf8_to_utf16(str_value);
+#else
+        val = str_value;
+#endif
+
+        if (end_ptr)
+        {
+            *end_ptr = data_next_ptr;
+        }
+
+        return true;
+    }
+
+    bool json_value::_parse_raw_object(const uint8_t* data_ptr, const uint8_t** end_ptr, json_value& val)
+    {
+        val._reset_type(json_type::json_type_object);
+
+        const uint8_t* data_next_ptr = data_ptr;
+        while (true)
+        {
+            std::string key_name;
+            json_value key_value;
+
+            if (json_raw_type::raw_object_end == *data_next_ptr)
+            {
+                data_next_ptr++;
+                break;
+            }
+
+            const uint8_t* value_ptr = data_next_ptr + sizeof(json_raw_type);
+            size_t value_size = 0;
+            switch (*data_next_ptr)
+            {
+            case json_raw_type::raw_string8:
+                value_size = *(uint8_t*)value_ptr;
+                key_name = std::string((const char*)(value_ptr + sizeof(uint8_t)), value_size);
+                data_next_ptr = (value_ptr + sizeof(uint8_t)) + value_size;
+                break;
+            case json_raw_type::raw_string16:
+                value_size = *(uint16_t*)value_ptr;
+                key_name = std::string((const char*)(value_ptr + sizeof(uint16_t)), value_size);
+                data_next_ptr = (value_ptr + sizeof(uint16_t)) + value_size;
+                break;
+            case json_raw_type::raw_string32:
+                value_size = *(uint32_t*)value_ptr;
+                key_name = std::string((const char*)(value_ptr + sizeof(uint32_t)), value_size);
+                data_next_ptr = (value_ptr + sizeof(uint32_t)) + value_size;
+                break;
+            default:
+                return false;
+            }
+
+            if (key_name.empty())
+            {
+                return false;
+            }
+
+            if (!_parse_raw(data_next_ptr, &data_next_ptr, key_value))
+            {
+                return false;
+            }
+
+#ifdef _UNICODE
+            val[_utf8_to_utf16(key_name)] = key_value;
+#else
+            val[key_name] = key_value;
+#endif
+        }
+
+        if (end_ptr)
+        {
+            *end_ptr = data_next_ptr;
+        }
+
+        return true;
+    }
+
+    bool json_value::_parse_raw_array(const uint8_t* data_ptr, const uint8_t** end_ptr, json_value& val)
+    {
+        const uint8_t* data_next_ptr = data_ptr;
+        val._reset_type(json_type::json_type_array);
+
+        while (true)
+        {
+            if (json_raw_type::raw_array_end == *data_next_ptr)
+            {
+                data_next_ptr++;
+                break;
+            }
+
+            json_value value;
+            if (!_parse_raw(data_next_ptr, &data_next_ptr, value))
+            {
+                return false;
+            }
+
+            val.m_data._array_ptr->emplace_back(std::move(value));
+        }
+
+        if (end_ptr)
+        {
+            *end_ptr = data_next_ptr;
+        }
+
+        return true;
+    }
+
+    bool json_value::_parse_raw_bin(const uint8_t* data_ptr, const uint8_t** end_ptr, json_value& val)
+    {
+        json_raw_type type = (json_raw_type)*data_ptr;
+        const uint8_t* date_value_ptr = data_ptr + sizeof(json_raw_type);
+        const uint8_t* data_next_ptr = data_ptr;
+
+        json_bin raw;
+
+        switch (*data_ptr)
+        {
+        case json_raw_type::raw_bin_empty:
+            val = json_bin();
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_bin8:
+            raw.assign(date_value_ptr + sizeof(uint8_t), date_value_ptr + sizeof(uint8_t) + *(uint8_t*)date_value_ptr);
+            val = std::move(raw);
+            data_next_ptr = date_value_ptr + sizeof(uint8_t) + *(uint8_t*)date_value_ptr;
+            break;
+        case json_raw_type::raw_bin16:
+            raw.assign(date_value_ptr + sizeof(uint16_t), date_value_ptr + sizeof(uint16_t) + *(uint16_t*)date_value_ptr);
+            val = std::move(raw);
+            data_next_ptr = date_value_ptr + sizeof(uint16_t) + *(uint16_t*)date_value_ptr;
+            break;
+        case json_raw_type::raw_bin32:
+            raw.assign(date_value_ptr + sizeof(uint32_t), date_value_ptr + sizeof(uint32_t) + *(uint32_t*)date_value_ptr);
+            val = std::move(raw);
+            data_next_ptr = date_value_ptr + sizeof(uint32_t) + *(uint32_t*)date_value_ptr;
+            break;
+        }
+
+        if (end_ptr)
+        {
+            *end_ptr = data_next_ptr;
+        }
+
+        return true;
+    }
+
+    bool json_value::_parse_raw(const uint8_t* data_ptr, const uint8_t** end_ptr, json_value& val)
+    {
+        const uint8_t* date_value_ptr = data_ptr + sizeof(json_raw_type);
+        const uint8_t* data_next_ptr = data_ptr;
+        bool parse_result = true;
+
+        switch (*data_next_ptr)
+        {
+        case json_raw_type::raw_null:
+            val = json_type::json_type_null;
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_false:
+            val = false;
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_true:
+            val = true;
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_int8:
+            val = *(int8_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(int8_t);
+            break;
+        case json_raw_type::raw_int16:
+            val = *(int16_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(int16_t);
+            break;
+        case json_raw_type::raw_int32:
+            val = *(int32_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(int32_t);
+            break;
+        case json_raw_type::raw_int64:
+            val = *(int64_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(int64_t);
+            break;
+        case json_raw_type::raw_uint8:
+            val = *(uint8_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(uint8_t);
+            break;
+        case json_raw_type::raw_uint16:
+            val = *(uint16_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(uint16_t);
+            break;
+        case json_raw_type::raw_uint32:
+            val = *(uint32_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(uint32_t);
+            break;
+        case json_raw_type::raw_uint64:
+            val = *(uint64_t*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(uint64_t);
+            break;
+        case json_raw_type::raw_float:
+            val = *(double*)date_value_ptr;
+            data_next_ptr += sizeof(json_raw_type) + sizeof(double);
+            break;
+        case json_raw_type::raw_string_empty:
+        case json_raw_type::raw_string8:
+        case json_raw_type::raw_string16:
+        case json_raw_type::raw_string32:
+            parse_result = _parse_raw_string(data_next_ptr, &data_next_ptr, val);
+            break;
+        case json_raw_type::raw_bin_empty:
+        case json_raw_type::raw_bin8:
+        case json_raw_type::raw_bin16:
+        case json_raw_type::raw_bin32:
+            parse_result = _parse_raw_bin(data_next_ptr, &data_next_ptr, val);
+            break;
+        case json_raw_type::raw_object_empty:
+            val._reset_type(json_type::json_type_object);
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_object_beg:
+            parse_result = _parse_raw_object(date_value_ptr, &data_next_ptr, val);
+            break;
+        case json_raw_type::raw_object_end:
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_array_empty:
+            val._reset_type(json_type::json_type_array);
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        case json_raw_type::raw_array_beg:
+            parse_result = _parse_raw_array(date_value_ptr, &data_next_ptr, val);
+            break;
+        case json_raw_type::raw_array_end:
+            data_next_ptr += sizeof(json_raw_type);
+            break;
+        default:
+            return false;
+        }
+
+        if (!parse_result)
+        {
+            return parse_result;
+        }
+
+        if (end_ptr)
+        {
+            *end_ptr = data_next_ptr;
+        }
+
+        return true;
+    }
+
+    std::vector<uint8_t> json_value::dump_to_binary()
+    {
+        std::vector<uint8_t> result;
+        _dump_raw(result);
+        return result;
+    }
+
+    bool json_value::dump_to_binary_file(const _tstring& strPath)
+    {
+        std::vector<uint8_t> result;
+        _dump_raw(result);
+
+        std::ofstream output_file(strPath, std::ios::binary | std::ios::out);
+        if (!output_file.is_open())
+        {
+            return false;
+        }
+
+        output_file.write((char*)result.data(), result.size());
+        output_file.close();
+
+        return true;
+    }
+
+    json_value& json_value::_get_none_value()
     {
         static json_value val(json_type::json_type_null);
         return val;
@@ -1995,7 +2651,7 @@ namespace fcjson
         // 2bytes 110xxxxx 10xxxxxx
         else if (cp32 >= 0x00000080 && cp32 <= 0x000007FF)
         {
-            text_buffer[0] = ((cp32 >>  6) & 0x1F) | 0xC0;
+            text_buffer[0] = ((cp32 >> 6) & 0x1F) | 0xC0;
             text_buffer[1] = ((cp32 & 0x3F)) | 0x80;
             text_buffer[2] = 0;
         }
@@ -2003,7 +2659,7 @@ namespace fcjson
         else if (cp32 >= 0x00000800 && cp32 <= 0x0000FFFF)
         {
             text_buffer[0] = ((cp32 >> 12) & 0x0F) | 0xE0;
-            text_buffer[1] = ((cp32 >>  6) & 0x3F) | 0x80;
+            text_buffer[1] = ((cp32 >> 6) & 0x3F) | 0x80;
             text_buffer[2] = ((cp32 & 0x3F)) | 0x80;
             text_buffer[3] = 0;
         }
@@ -2012,7 +2668,7 @@ namespace fcjson
         {
             text_buffer[0] = ((cp32 >> 18) & 0x07) | 0xF0;
             text_buffer[1] = ((cp32 >> 12) & 0x3F) | 0x80;
-            text_buffer[2] = ((cp32 >>  6) & 0x3F) | 0x80;
+            text_buffer[2] = ((cp32 >> 6) & 0x3F) | 0x80;
             text_buffer[3] = ((cp32 & 0x3F)) | 0x80;
             text_buffer[4] = 0;
         }
@@ -2022,7 +2678,7 @@ namespace fcjson
             text_buffer[0] = ((cp32 >> 24) & 0x03) | 0xF8;
             text_buffer[1] = ((cp32 >> 18) & 0x3F) | 0x80;
             text_buffer[2] = ((cp32 >> 12) & 0x3F) | 0x80;
-            text_buffer[3] = ((cp32 >>  6) & 0x3F) | 0x80;
+            text_buffer[3] = ((cp32 >> 6) & 0x3F) | 0x80;
             text_buffer[4] = ((cp32 & 0x3F)) | 0x80;
             text_buffer[5] = 0;
         }
@@ -2033,7 +2689,7 @@ namespace fcjson
             text_buffer[1] = ((cp32 >> 24) & 0x3F) | 0x80;
             text_buffer[2] = ((cp32 >> 18) & 0x3F) | 0x80;
             text_buffer[3] = ((cp32 >> 12) & 0x3F) | 0x80;
-            text_buffer[4] = ((cp32 >>  6) & 0x3F) | 0x80;
+            text_buffer[4] = ((cp32 >> 6) & 0x3F) | 0x80;
             text_buffer[5] = ((cp32 & 0x3F)) | 0x80;
             text_buffer[6] = 0;
         }
@@ -2394,6 +3050,22 @@ namespace fcjson
         }
 
         return ch_count;
+    }
+
+    std::string _utf16_to_utf8(const std::wstring utf16)
+    {
+        std::string str_utf8;
+        std::wstring str_utf16;
+        int32_t utf8_length = _utf16_to_utf8(utf16.data(), utf16.size() * sizeof(wchar_t), &str_utf8, &str_utf16);
+        return str_utf8;
+    }
+
+    std::wstring _utf8_to_utf16(const std::string utf8)
+    {
+        std::string str_utf8;
+        std::wstring str_utf16;
+        int32_t utf16_length = _utf8_to_utf16(utf8.data(), utf8.size() * sizeof(wchar_t), &str_utf8, &str_utf16);
+        return str_utf16;
     }
 
 #ifdef _WIN32

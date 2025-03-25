@@ -4,7 +4,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
@@ -760,7 +760,7 @@ namespace fcjson
 
         json_bool as_bool() const
         {
-            if (!json_type::json_type_bool == m_type)
+            if (json_type::json_type_bool != m_type)
             {
                 throw json_exception(__JSON_FUNCTION__);
             }
@@ -790,7 +790,7 @@ namespace fcjson
 
         json_float as_float() const
         {
-            if (!json_type::json_type_float == m_type)
+            if (json_type::json_type_float != m_type)
             {
                 throw json_exception(__JSON_FUNCTION__);
             }
@@ -800,7 +800,7 @@ namespace fcjson
 
         json_string& as_string() const
         {
-            if (!json_type::json_type_string == m_type)
+            if (json_type::json_type_string != m_type)
             {
                 throw json_exception(__JSON_FUNCTION__);
             }
@@ -810,7 +810,7 @@ namespace fcjson
 
         json_object& as_object() const
         {
-            if (!json_type::json_type_object == m_type)
+            if (json_type::json_type_object != m_type)
             {
                 throw json_exception(__JSON_FUNCTION__);
             }
@@ -820,7 +820,7 @@ namespace fcjson
 
         json_array& as_array() const
         {
-            if (!json_type::json_type_array == m_type)
+            if (json_type::json_type_array != m_type)
             {
                 throw json_exception(__JSON_FUNCTION__);
             }
@@ -965,10 +965,10 @@ namespace fcjson
             return _parse(read_text.c_str(), *this, &end_ptr);
         }
 
-        _tstring dump(int indent= 0, bool flag_escape = false) const
+        _tstring dump(int indent = 0, bool flag_escape = false) const
         {
             _tstring result_text;
-            std::vector<_tstring> indent_text({_T("")});
+            std::vector<_tstring> indent_text({ _T("") });
             _dump(result_text, indent_text, 0, indent, flag_escape);
             return result_text;
         }
@@ -976,7 +976,7 @@ namespace fcjson
         bool dump_to_file(const _tstring& strPath, int indent = 0, bool flag_escape = false, json_encoding encoding = json_encoding::json_encoding_auto)
         {
             _tstring dump_text;
-            std::vector<_tstring> indent_text({_T("")});
+            std::vector<_tstring> indent_text({ _T("") });
             _dump(dump_text, indent_text, 0, indent, flag_escape);
 
             std::string str_utf8;
@@ -2197,7 +2197,7 @@ namespace fcjson
             // 2bytes 110xxxxx 10xxxxxx
             else if (cp32 >= 0x00000080 && cp32 <= 0x000007FF)
             {
-                text_buffer[0] = ((cp32 >>  6) & 0x1F) | 0xC0;
+                text_buffer[0] = ((cp32 >> 6) & 0x1F) | 0xC0;
                 text_buffer[1] = ((cp32 & 0x3F)) | 0x80;
                 text_buffer[2] = 0;
             }
@@ -2206,7 +2206,7 @@ namespace fcjson
             else if (cp32 >= 0x00000800 && cp32 <= 0x0000FFFF)
             {
                 text_buffer[0] = ((cp32 >> 12) & 0x0F) | 0xE0;
-                text_buffer[1] = ((cp32 >>  6) & 0x3F) | 0x80;
+                text_buffer[1] = ((cp32 >> 6) & 0x3F) | 0x80;
                 text_buffer[2] = ((cp32 & 0x3F)) | 0x80;
                 text_buffer[3] = 0;
             }
@@ -2216,7 +2216,7 @@ namespace fcjson
             {
                 text_buffer[0] = ((cp32 >> 18) & 0x07) | 0xF0;
                 text_buffer[1] = ((cp32 >> 12) & 0x3F) | 0x80;
-                text_buffer[2] = ((cp32 >>  6) & 0x3F) | 0x80;
+                text_buffer[2] = ((cp32 >> 6) & 0x3F) | 0x80;
                 text_buffer[3] = ((cp32 & 0x3F)) | 0x80;
                 text_buffer[4] = 0;
             }
@@ -2227,7 +2227,7 @@ namespace fcjson
                 text_buffer[0] = ((cp32 >> 24) & 0x03) | 0xF8;
                 text_buffer[1] = ((cp32 >> 18) & 0x3F) | 0x80;
                 text_buffer[2] = ((cp32 >> 12) & 0x3F) | 0x80;
-                text_buffer[3] = ((cp32 >>  6) & 0x3F) | 0x80;
+                text_buffer[3] = ((cp32 >> 6) & 0x3F) | 0x80;
                 text_buffer[4] = ((cp32 & 0x3F)) | 0x80;
                 text_buffer[5] = 0;
             }
@@ -2239,7 +2239,7 @@ namespace fcjson
                 text_buffer[1] = ((cp32 >> 24) & 0x3F) | 0x80;
                 text_buffer[2] = ((cp32 >> 18) & 0x3F) | 0x80;
                 text_buffer[3] = ((cp32 >> 12) & 0x3F) | 0x80;
-                text_buffer[4] = ((cp32 >>  6) & 0x3F) | 0x80;
+                text_buffer[4] = ((cp32 >> 6) & 0x3F) | 0x80;
                 text_buffer[5] = ((cp32 & 0x3F)) | 0x80;
                 text_buffer[6] = 0;
             }
