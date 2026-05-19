@@ -166,15 +166,11 @@ namespace fcjson
 
     json_value::json_value(const _tchar* val)
     {
-        if (val)
+        m_type = json_type::json_type_string;
+        m_data._string_ptr = new (std::nothrow) json_string();
+        if (val && nullptr != m_data._string_ptr)
         {
-            m_type = json_type::json_type_string;
-            m_data._string_ptr = new (std::nothrow) json_string(val);
-        }
-        else
-        {
-            m_type = json_type::json_type_string;
-            m_data = { 0 };
+            *(m_data._string_ptr) = val;
         }
     }
 
@@ -222,6 +218,11 @@ namespace fcjson
         case json_type::json_type_array:
         {
             m_data._array_ptr = new (std::nothrow) json_array(*r.m_data._array_ptr);
+        }
+        break;
+        case json_type::json_type_bin:
+        {
+            m_data._raw_ptr = new (std::nothrow) json_bin(*r.m_data._raw_ptr);
         }
         break;
         default:
@@ -439,9 +440,9 @@ namespace fcjson
         }
 
         _reset_type(json_type::json_type_string);
-        if (nullptr == m_data._string_ptr)
+        if (val && nullptr != m_data._string_ptr )
         {
-            m_data._string_ptr = new (std::nothrow) json_string(val);
+            *m_data._string_ptr = val;
         }
         return *this;
     }
@@ -487,6 +488,21 @@ namespace fcjson
         if (nullptr != m_data._array_ptr)
         {
             *m_data._array_ptr = r;
+        }
+        return *this;
+    }
+
+    json_value& json_value::operator = (const json_bin& r)
+    {
+        if (this == &_get_none_value())
+        {
+            return _get_none_value();
+        }
+
+        _reset_type(json_type::json_type_bin);
+        if (nullptr != m_data._array_ptr)
+        {
+            *m_data._raw_ptr = r;
         }
         return *this;
     }
@@ -577,6 +593,21 @@ namespace fcjson
         if (nullptr != m_data._array_ptr)
         {
             *m_data._array_ptr = std::move(r);
+        }
+        return *this;
+    }
+
+    json_value& json_value::operator = (json_bin&& r)
+    {
+        if (this == &_get_none_value())
+        {
+            return _get_none_value();
+        }
+
+        _reset_type(json_type::json_type_bin);
+        if (nullptr != m_data._raw_ptr)
+        {
+            *m_data._raw_ptr = std::move(r);
         }
         return *this;
     }
@@ -786,11 +817,31 @@ namespace fcjson
         return m_data._bool;
     }
 
+    json_bool json_value::as_bool(json_bool default_val) const
+    {
+        if (json_type::json_type_bool != m_type)
+        {
+            return default_val;
+        }
+
+        return m_data._bool;
+    }
+
     json_int json_value::as_int() const
     {
         if (!(json_type::json_type_int == m_type || json_type::json_type_uint == m_type))
         {
             throw json_exception(__JSON_FUNCTION__);
+        }
+
+        return m_data._int;
+    }
+
+    json_int json_value::as_int(json_int default_val) const
+    {
+        if (!(json_type::json_type_int == m_type || json_type::json_type_uint == m_type))
+        {
+            return default_val;
         }
 
         return m_data._int;
@@ -806,11 +857,31 @@ namespace fcjson
         return m_data._uint;
     }
 
+    json_uint json_value::as_uint(json_uint default_val) const
+    {
+        if (!(json_type::json_type_int == m_type || json_type::json_type_uint == m_type))
+        {
+            return default_val;
+        }
+
+        return m_data._uint;
+    }
+
     json_float json_value::as_float() const
     {
         if (json_type::json_type_float != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
+        }
+
+        return m_data._float;
+    }
+
+    json_float json_value::as_float(json_float default_val) const
+    {
+        if (json_type::json_type_float != m_type)
+        {
+            return default_val;
         }
 
         return m_data._float;
@@ -826,11 +897,31 @@ namespace fcjson
         return m_data._float;
     }
 
+    json_float json_value::as_number(json_float default_val) const
+    {
+        if (!is_number())
+        {
+            return default_val;
+        }
+
+        return m_data._float;
+    }
+
     json_string& json_value::as_string() const
     {
         if (json_type::json_type_string != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
+        }
+
+        return *m_data._string_ptr;
+    }
+
+    json_string json_value::as_string(json_string default_val) const
+    {
+        if (json_type::json_type_string != m_type)
+        {
+            return default_val;
         }
 
         return *m_data._string_ptr;
@@ -846,11 +937,31 @@ namespace fcjson
         return *m_data._object_ptr;
     }
 
+    json_object json_value::as_object(json_object default_val) const
+    {
+        if (json_type::json_type_object != m_type)
+        {
+            return default_val;
+        }
+
+        return *m_data._object_ptr;
+    }
+
     json_array& json_value::as_array() const
     {
         if (json_type::json_type_array != m_type)
         {
             throw json_exception(__JSON_FUNCTION__);
+        }
+
+        return *m_data._array_ptr;
+    }
+
+    json_array json_value::as_array(json_array default_val) const
+    {
+        if (json_type::json_type_array != m_type)
+        {
+            return default_val;
         }
 
         return *m_data._array_ptr;
@@ -866,7 +977,17 @@ namespace fcjson
         return *m_data._raw_ptr;
     }
 
-    bool json_value::is_value(const _tstring& name) const
+    json_bin json_value::as_bin(json_bin default_val) const
+    {
+        if (json_type::json_type_bin != m_type)
+        {
+            return default_val;
+        }
+
+        return *m_data._raw_ptr;
+    }
+
+    bool json_value::has_value(const _tstring& name) const
     {
         if (this == &_get_none_value())
         {
@@ -1387,7 +1508,7 @@ namespace fcjson
             ch_ptr++;
         }
 
-        if (!flag_dot && 0 == !flag_exponent)
+        if (!flag_dot && !flag_exponent)
         {
             append_str += _T(".0");
         }
@@ -1437,6 +1558,7 @@ namespace fcjson
             {
                 append_str += _T(R"(/)");
             }
+            break;
             case _T('\\'):
             {
                 append_str += _T(R"(\\)");
@@ -2706,7 +2828,6 @@ namespace fcjson
         int32_t byte_count = 0;
         int32_t ch_count = 0;
         bool result_flag = true;
-        bool flag_bom = true;
 
         if (text_utf8_ptr)
         {
@@ -2716,6 +2837,16 @@ namespace fcjson
         if (text_utf16_ptr)
         {
             text_out_utf16 += *text_utf16_ptr;
+        }
+
+        if ((0xEF == ch_data_ptr[0]) && (0xBB == ch_data_ptr[1]) && (0xBF == ch_data_ptr[2]))
+        {
+            ch_data_ptr += 3;
+
+            if (-1 != size)
+            {
+                size -= 3;
+            }
         }
 
         while ((0 != *ch_data_ptr) && (0 != size))
@@ -2766,11 +2897,6 @@ namespace fcjson
                             break;
                         }
 
-                        if (0xEF == ch && 3 == byte_count)
-                        {
-                            flag_bom = true;
-                        }
-
                         byte_count--;
                     }
                     else
@@ -2787,19 +2913,6 @@ namespace fcjson
                         break;
                     }
 
-                    if (flag_bom)
-                    {
-                        if (0xBB != ch && 2 == byte_count)
-                        {
-                            flag_bom = false;
-                        }
-
-                        if (0xBF != ch && 1 == byte_count)
-                        {
-                            flag_bom = false;
-                        }
-                    }
-
                     cp32 = cp32 << 6;
                     cp32 |= ch & 0x3F;
 
@@ -2807,13 +2920,6 @@ namespace fcjson
 
                     if (0 == byte_count)
                     {
-                        if (flag_bom)
-                        {
-                            flag_bom = false;
-                            ch_data_ptr++;
-                            continue;
-                        }
-
                         ch_count++;
                     }
                 }
@@ -2903,45 +3009,30 @@ namespace fcjson
             }
         }
 
+        cp16 = *ch_data_ptr;
+        if (0xFFFE == cp16 || 0xFEFF == cp16)
+        {
+            if (0xFFFE == cp16)
+            {
+                flag_big_endian = true;
+            }
+
+            if (0xFEFF == cp16)
+            {
+                flag_little_endian = true;
+            }
+
+            ch_data_ptr++;
+
+            if (-1 != size)
+            {
+                size -= 2;
+            }
+        }
+
         while ((0 != *ch_data_ptr) && (0 != size))
         {
             cp16 = *ch_data_ptr;
-
-            if (0xFFFE == cp16 || 0xFEFF == cp16)
-            {
-                if (0 == byte_count)
-                {
-                    if (0xFFFE == cp16)
-                    {
-                        flag_big_endian = true;
-                    }
-
-                    if (0xFEFF == cp16)
-                    {
-                        flag_little_endian = true;
-                    }
-                }
-                else
-                {
-                    result_flag = false;
-                    break;
-                }
-
-                if (flag_big_endian && flag_little_endian)
-                {
-                    result_flag = false;
-                    break;
-                }
-
-                ch_data_ptr++;
-
-                if (-1 != size)
-                {
-                    size -= 2;
-                }
-
-                continue;
-            }
 
             if (flag_big_endian)
             {

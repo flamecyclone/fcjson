@@ -188,9 +188,11 @@ namespace fcjson
         json_value& operator = (const json_object& r);
         json_value& operator = (const json_array& r);
         json_value& operator = (const json_value& r);
+        json_value& operator = (const json_bin& r);
         json_value& operator = (json_string&& r);
         json_value& operator = (json_object&& r);
         json_value& operator = (json_array&& r);
+        json_value& operator = (json_bin&& r);
         json_value& operator = (json_value&& r) noexcept;
 
         // [] Overloading, Accessing a non-existent index will create a new sub-item
@@ -212,14 +214,23 @@ namespace fcjson
 
         // Get data
         json_bool as_bool() const;
+        json_bool as_bool(json_bool default_val) const;
         json_int as_int() const;
+        json_int as_int(json_int default_val) const;
         json_uint as_uint() const;
+        json_uint as_uint(json_uint default_val) const;
         json_float as_float() const;
+        json_float as_float(json_float default_val) const;
         json_float as_number() const;
+        json_float as_number(json_float default_val) const;
         json_string& as_string() const;
+        json_string as_string(json_string default_val) const;
         json_object& as_object() const;
+        json_object as_object(json_object default_val) const;
         json_array& as_array() const;
+        json_array as_array(json_array default_val) const;
         json_bin& as_bin() const;
+        json_bin as_bin(json_bin default_val) const;
 
         // Parse
         bool parse(const _tstring& text);
@@ -235,7 +246,7 @@ namespace fcjson
 
         // Others
         size_t count() const;
-        bool is_value(const _tstring& name = _T("")) const;
+        bool has_value(const _tstring& name = _T("")) const;
         bool remove(const _tstring& name);
         bool remove(const size_t index);
         json_type type() const;
